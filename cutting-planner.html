@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OSB Cutting Planner — Hems</title>
+<title>OSB Cutting Planner</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -21,7 +21,7 @@
     display: grid;
     grid-template-columns: 280px 1fr;
     gap: 20px;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
   }
 
@@ -55,7 +55,7 @@
     color: #aaa;
     margin-bottom: 2px;
   }
-  .field input {
+  .field input, .field select {
     width: 100%;
     padding: 6px 8px;
     border: 1px solid #2a2a4a;
@@ -66,17 +66,12 @@
     outline: none;
     transition: border-color 0.2s;
   }
-  .field input:focus { border-color: #4a6fa5; }
+  .field input:focus, .field select:focus { border-color: #4a6fa5; }
   .field .unit { font-size: 0.75rem; color: #666; }
   .field-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-  }
-  .field.locked input {
-    background: #1a1a2e;
-    color: #666;
-    cursor: not-allowed;
   }
 
   .validation-banner {
@@ -107,44 +102,26 @@
     color: #f0a0a0;
   }
   .issues-list li { margin-left: 16px; margin-top: 2px; }
+  .issues-list li.warning { color: #f59e0b; }
+  .issues-list li.info { color: #60a5fa; }
 
-  .solution-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .solution-nav button {
-    background: #2a2a4a;
-    border: 1px solid #3a3a5a;
-    color: #ccc;
-    border-radius: 5px;
-    padding: 4px 10px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    transition: background 0.2s;
-  }
-  .solution-nav button:hover { background: #3a3a5a; }
-  .solution-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
-  .solution-nav .sol-label { font-size: 0.8rem; color: #aaa; }
-  .solution-summary {
+  .solver-info {
     font-size: 0.75rem;
     color: #7f8fa6;
+    line-height: 1.5;
     margin-top: 4px;
-    line-height: 1.4;
   }
-  .tg-badge {
+  .solver-info strong { color: #ccc; }
+  .solver-info .orientation-tag {
     display: inline-block;
     font-size: 0.65rem;
-    padding: 1px 5px;
+    padding: 1px 6px;
     border-radius: 3px;
     font-weight: 600;
-    vertical-align: middle;
-    margin-left: 4px;
+    background: #1a1a3e;
+    color: #60a5fa;
+    border: 1px solid #2a4a7a;
   }
-  .tg-badge.good { background: #0d3320; color: #4ade80; border: 1px solid #1a6b3c; }
-  .tg-badge.bad { background: #3b1218; color: #f87171; border: 1px solid #7f1d1d; }
-  .tg-badge.na { background: #2a2a3a; color: #888; border: 1px solid #3a3a4a; }
 
   .canvas-area {
     display: flex;
@@ -187,11 +164,11 @@
     padding: 5px 10px;
     border-bottom: 1px solid #1a1a3e;
   }
-  .pieces-table tr.invalid-row td { color: #f87171; }
   .pieces-table tr.valid-row td:first-child {
     border-left: 3px solid #4ade80;
     padding-left: 7px;
   }
+  .pieces-table tr.invalid-row td { color: #f87171; }
 
   .waste-info {
     margin-top: 10px;
@@ -200,84 +177,14 @@
   }
   .waste-info span { color: #facc15; font-weight: 600; }
 
-  .tg-legend {
-    margin-top: 10px;
-    font-size: 0.75rem;
-    color: #7f8fa6;
-    line-height: 1.6;
-  }
-
-  /* Failure diagnosis */
-  .failure-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-  .failure-card {
-    background: #0f0f23;
-    border: 1px solid #2a2a4a;
-    border-radius: 8px;
-    padding: 12px;
-    transition: border-color 0.2s;
-  }
-  .failure-card:hover { border-color: #4a4a6a; }
-  .failure-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-  .failure-card-header .split-label { color: #ccc; }
-  .failure-card-header .split-num {
-    color: #555;
-    font-size: 0.7rem;
-    font-weight: 400;
-  }
-  .failure-plates {
+  .plates-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 8px;
+    gap: 16px;
   }
-  .failure-plate-box { position: relative; }
-  .failure-plate-box .plate-label {
-    font-size: 0.7rem;
-    color: #7f8fa6;
-    margin-bottom: 4px;
-    text-align: center;
-  }
-  .failure-plate-box canvas {
-    width: 100%;
-    height: 100px;
-    border-radius: 4px;
-    background: #0a0a1a;
-  }
-  .failure-reason {
-    font-size: 0.75rem;
-    color: #f87171;
-    line-height: 1.4;
-    padding: 6px 8px;
-    background: #1a0a0e;
-    border-radius: 4px;
-    border-left: 3px solid #7f1d1d;
-  }
-  .failure-reason .dim-note {
-    color: #f59e0b;
-    font-weight: 600;
-  }
-  .failure-section-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-  .failure-section-header h2 { margin-bottom: 0; }
-  .failure-section-header .area-note {
-    font-size: 0.75rem;
-    color: #888;
-    font-weight: 400;
+  .plates-grid .diagram-section { min-width: 0; }
+  @media (max-width: 1000px) {
+    .plates-grid { grid-template-columns: 1fr; }
   }
 
   @media (max-width: 800px) {
@@ -289,7 +196,7 @@
 <body>
 
 <h1>OSB Cutting Planner</h1>
-<p class="subtitle">Hems flooring — auto plate solver with T&G interlock optimization</p>
+<p class="subtitle">Auto plate layout solver</p>
 
 <div class="layout">
   <div class="controls">
@@ -316,13 +223,13 @@
         </div>
       </div>
       <div class="field">
-        <label>Lumber width (6x2) <span class="unit">mm</span></label>
+        <label>Lumber width <span class="unit">mm</span></label>
         <input id="lumberW" type="number" step="1" value="48">
       </div>
     </div>
 
     <div class="control-group">
-      <h3>OSB Plate (tg2 — T&G on long sides)</h3>
+      <h3>Plates</h3>
       <div class="field-row">
         <div class="field">
           <label>Length <span class="unit">cm</span></label>
@@ -334,34 +241,8 @@
         </div>
       </div>
       <div class="field">
-        <label>Thickness <span class="unit">cm</span></label>
-        <input id="osbT" type="number" step="0.1" value="1.8">
-      </div>
-      <div class="field locked">
         <label>Plates available</label>
-        <input type="number" value="2" readonly>
-      </div>
-    </div>
-
-    <div class="control-group">
-      <h3>Cut Positions</h3>
-      <div class="field">
-        <label>Row 1 joint position <span class="unit">cm from left</span></label>
-        <input id="row1Joint" type="number" step="0.1" value="200">
-      </div>
-      <div class="field">
-        <label>Row 2 joint position <span class="unit">cm from left</span></label>
-        <input id="row2Joint" type="number" step="0.1" value="150">
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Left depth <span class="unit">cm</span></label>
-          <input id="row1Width" type="number" step="0.1" value="119.8">
-        </div>
-        <div class="field">
-          <label>Right depth <span class="unit">cm</span></label>
-          <input id="rightSplitDepth" type="number" step="0.1" value="119.8">
-        </div>
+        <input id="plateCount" type="number" step="1" value="2" min="1">
       </div>
     </div>
 
@@ -370,14 +251,9 @@
     </div>
     <ul id="issuesList" class="issues-list" style="display:none;"></ul>
 
-    <div class="control-group" id="solutionNavGroup" style="display:none;">
-      <h3>Plate Assignment</h3>
-      <div class="solution-nav">
-        <button id="prevSol" onclick="changeSolution(-1)">&laquo;</button>
-        <span class="sol-label" id="solLabel">1 / 1</span>
-        <button id="nextSol" onclick="changeSolution(1)">&raquo;</button>
-      </div>
-      <div class="solution-summary" id="solSummary"></div>
+    <div class="control-group" id="solverInfoGroup" style="display:none;">
+      <h3>Solver</h3>
+      <div class="solver-info" id="solverInfo"></div>
     </div>
   </div>
 
@@ -385,34 +261,15 @@
     <div class="diagram-section">
       <h2>Frame Layout (top view)</h2>
       <canvas id="frameCanvas" height="350"></canvas>
-      <div class="tg-legend">
-        Back wall = female (groove) edge &nbsp;|&nbsp; T&G interlock between rows &nbsp;|&nbsp; Front = male (tongue) edge or cut
-      </div>
     </div>
 
-    <div class="diagram-section" id="plate1Section">
-      <h2 id="plate1Title">Plate 1</h2>
-      <canvas id="plate1Canvas" height="200"></canvas>
-    </div>
-
-    <div class="diagram-section" id="plate2Section">
-      <h2 id="plate2Title">Plate 2</h2>
-      <canvas id="plate2Canvas" height="200"></canvas>
-    </div>
-
-    <div class="diagram-section" id="failureDiagSection" style="display:none;">
-      <div class="failure-section-header">
-        <h2>Why it doesn't fit</h2>
-        <span class="area-note" id="failureAreaNote"></span>
-      </div>
-      <div class="failure-grid" id="failureGrid"></div>
-    </div>
+    <div id="platesContainer" class="plates-grid"></div>
 
     <div class="diagram-section">
       <h2>Pieces</h2>
       <table class="pieces-table">
         <thead>
-          <tr><th>Piece</th><th>Dimensions</th><th>Plate</th><th>Use</th><th>T&G</th><th>Status</th></tr>
+          <tr><th>Piece</th><th>Dimensions</th><th>Plate</th><th>Position</th><th>Status</th></tr>
         </thead>
         <tbody id="piecesBody"></tbody>
       </table>
@@ -422,53 +279,21 @@
 </div>
 
 <script>
-/*
- * T&G MODEL:
- *
- * Each OSB plate has tongue-and-groove on the two LONG sides (239.7cm edges).
- *   - Top long edge (y=0 on plate canvas): MALE (tongue)
- *   - Bottom long edge (y=osbW on plate canvas): FEMALE (groove)
- *   - Short edges (x=0, x=osbL): plain cut, no T&G
- *
- * On the FRAME (top view, y=0 is back wall, y=frameD is front):
- *   - Row 1 (back): female (groove) edge against back wall, male (tongue) edge facing Row 2
- *   - Row 2 (front): female (groove) edge facing Row 1 (interlocks with Row 1's male),
- *                     male (tongue) edge toward front (or cut edge if ripped)
- *
- * So for each piece, we track which plate edge it NEEDS to preserve:
- *   - Row 1 pieces (1A, 2A): need MALE edge on the side facing Row 2.
- *     If piece.h == osbW (full width): both T&G edges preserved automatically.
- *     If piece.h < osbW (ripped): must keep the MALE edge (y=0 side of plate).
- *       → piece must be placed at y=0 on the plate.
- *
- *   - Row 2 pieces (2C, 2D): need FEMALE edge on the side facing Row 1.
- *     If piece.h == osbW (full width): both preserved.
- *     If piece.h < osbW (ripped): must keep the FEMALE edge (y=osbW side of plate).
- *       → piece must be placed at y = osbW - piece.h on the plate.
- *
- * The packing solver PREFERS placements that satisfy these constraints, but
- * does NOT enforce them as hard requirements. Mismatches produce warnings.
- */
-
+const PALETTE = [
+  '#3b82f6', '#10b981', '#f59e0b', '#6366f1',
+  '#ef4444', '#e879f9', '#14b8a6', '#f97316',
+  '#8b5cf6', '#06b6d4', '#84cc16', '#ec4899',
+];
 const COLORS = {
-  '1A': '#3b82f6',
-  '2A': '#6366f1',
-  '2C': '#10b981',
-  '2D': '#f59e0b',
   frame: '#4a5568',
   joist: '#718096',
-  'R': '#e879f9',
   waste: '#1f2937',
   invalid: '#ef4444',
   validBorder: '#22c55e',
-  jointLine: '#facc15',
-  male: '#f472b6',    // pink for tongue
-  female: '#a78bfa',  // purple for groove
+  cutOnJoist: '#4ade80',
+  cutOffJoist: '#f59e0b',
 };
 const EPS = 0.5;
-
-let allSolutions = [];
-let currentSolIdx = 0;
 
 function getInputs() {
   return {
@@ -479,552 +304,758 @@ function getInputs() {
     lumberW: parseFloat(document.getElementById('lumberW').value) / 10,
     osbL: parseFloat(document.getElementById('osbL').value),
     osbW: parseFloat(document.getElementById('osbW').value),
-    osbT: parseFloat(document.getElementById('osbT').value),
-    row1Joint: parseFloat(document.getElementById('row1Joint').value),
-    row2Joint: parseFloat(document.getElementById('row2Joint').value),
-    row1Width: parseFloat(document.getElementById('row1Width').value),
-    rightSplitDepth: parseFloat(document.getElementById('rightSplitDepth').value),
+    plateCount: parseInt(document.getElementById('plateCount').value),
   };
 }
 
-// ===== T&G EDGE TRACKING =====
-// Each piece has:
-//   needsEdge: 'male' | 'female' | 'both' | 'none'
-//     'male'   → piece must touch plate y=0 (male/tongue edge)
-//     'female' → piece must touch plate y=osbW (female/groove edge)
-//     'both'   → piece uses full plate width, both edges preserved
-//     'none'   → no T&G needed (would only happen if rows not interlocking)
+// ===== GRID GENERATION =====
 
-function getNeedsEdge(pieceName, pieceH, osbW) {
-  const isRow1 = pieceName === '1A' || pieceName === '2A';
-  const isFullWidth = Math.abs(pieceH - osbW) < EPS;
-
-  if (isFullWidth) return 'both'; // both edges preserved
-
-  if (isRow1) {
-    // Row 1 needs male edge facing Row 2 → must keep male (y=0)
-    return 'male';
-  } else {
-    // Row 2 needs female edge facing Row 1 → must keep female (y=osbW)
-    return 'female';
+function nearJoist(pos, joists, lumberW) {
+  const half = lumberW / 2;
+  for (const j of joists) {
+    if (Math.abs(pos - j) <= half) return true;
   }
-}
-
-// ===== PACKING SOLVER WITH T&G =====
-
-/**
- * Check if a proposed placement satisfies T&G constraints.
- * Returns true if valid.
- */
-function checkTG(item, osbW) {
-  const p = item.piece;
-  if (p.needsEdge === 'both' || p.needsEdge === 'none') return true;
-  if (p.needsEdge === 'male') {
-    // Must touch y=0 (top/male edge) — Row 1 pieces need this for interlock
-    return item.y < EPS;
-  }
-  if (p.needsEdge === 'female') {
-    // Must touch y=osbW (bottom/female edge) — Row 2 pieces need this for interlock
-    return Math.abs((item.y + p.h) - osbW) < EPS;
-  }
-  return true;
+  return false;
 }
 
 /**
- * Count how many T&G interlocks are preserved in a layout.
- * Max = number of pieces that need an edge.
+ * Generate a grid layout for a given orientation.
+ * frameLen: dimension along plate length direction
+ * frameSpan: dimension along plate width direction (rows stack this way)
+ * plateL, plateW: plate dimensions for this orientation
+ * joists: array of joist positions along frameLen
+ * lumberW: joist width in cm
+ * orientation: label string
+ * isRotated: whether plate is rotated from its natural orientation
  */
-function countTGPreserved(layout, osbW) {
-  let count = 0;
-  for (const item of layout) {
-    if (checkTG(item, osbW)) count++;
+function generateGrid(frameLen, frameSpan, plateL, plateW, joists, lumberW, orientation, isRotated) {
+  const numRows = Math.ceil(frameSpan / plateW);
+  const numCols = Math.ceil(frameLen / plateL);
+
+  const pieces = [];
+  for (let r = 0; r < numRows; r++) {
+    const rowY = r * plateW;
+    const rowH = Math.min(plateW, frameSpan - rowY);
+    for (let c = 0; c < numCols; c++) {
+      const colX = c * plateL;
+      const colW = Math.min(plateL, frameLen - colX);
+      pieces.push({
+        name: `R${r + 1}C${c + 1}`,
+        row: r, col: c,
+        fx: colX, fy: rowY,
+        w: colW, h: rowH,
+        color: PALETTE[(r * numCols + c) % PALETTE.length],
+        isFullPlate: Math.abs(colW - plateL) < EPS && Math.abs(rowH - plateW) < EPS,
+        needsCutW: colW < plateL - EPS,
+        needsCutH: rowH < plateW - EPS,
+      });
+    }
   }
-  return count;
+
+  // Vertical cuts between columns (along frameLen axis)
+  const vCuts = [];
+  for (let c = 1; c < numCols; c++) {
+    const cutPos = c * plateL;
+    if (cutPos < frameLen - EPS) {
+      vCuts.push({ pos: cutPos, onJoist: nearJoist(cutPos, joists, lumberW) });
+    }
+  }
+
+  // Horizontal cuts between rows (along frameSpan axis)
+  const hCuts = [];
+  for (let r = 1; r < numRows; r++) {
+    const cutPos = r * plateW;
+    if (cutPos < frameSpan - EPS) {
+      hCuts.push({ pos: cutPos });
+    }
+  }
+
+  const joistAligned = vCuts.filter(c => c.onJoist).length;
+  const joistTotal = vCuts.length;
+  const totalCuts = vCuts.length + hCuts.length;
+
+  return {
+    pieces, vCuts, hCuts,
+    numRows, numCols,
+    totalPlates: pieces.length,
+    totalCuts,
+    orientation, isRotated,
+    plateL, plateW,
+    frameLen, frameSpan,
+    joistAligned, joistTotal,
+  };
 }
 
+// ===== PACKING SOLVER =====
+
+/**
+ * Generate all rotation variants for a piece.
+ * Returns [{w, h, rotated: false}, {w, h, rotated: true}] (deduped if square).
+ */
+function pieceOrientations(p) {
+  const variants = [{ w: p.w, h: p.h, rotated: false }];
+  if (Math.abs(p.w - p.h) > EPS) {
+    variants.push({ w: p.h, h: p.w, rotated: true });
+  }
+  return variants;
+}
+
+/**
+ * Try to pack a set of pieces onto one plate.
+ * Returns array of { piece, x, y, pw, ph } or null.
+ * pw/ph = actual placed width/height (may be rotated from piece.w/h).
+ */
 function packOnePlate(pieces, plateL, plateW) {
   if (pieces.length === 0) return null;
   if (pieces.length === 1) return packOne(pieces[0], plateL, plateW);
   if (pieces.length === 2) return packTwo(pieces[0], pieces[1], plateL, plateW);
   if (pieces.length === 3) return packThree(pieces, plateL, plateW);
   if (pieces.length === 4) return packFour(pieces, plateL, plateW);
-  return null;
+  return packShelf(pieces, plateL, plateW);
 }
 
 function packOne(p, pL, pW) {
-  if (p.w <= pL + EPS && p.h <= pW + EPS) {
-    // Default placement at y=0
-    let y = 0;
-    if (p.needsEdge === 'female') y = pW - p.h;
-    return [{ piece: p, x: 0, y }];
+  for (const o of pieceOrientations(p)) {
+    if (o.w <= pL + EPS && o.h <= pW + EPS)
+      return [{ piece: p, x: 0, y: 0, pw: o.w, ph: o.h }];
   }
   return null;
 }
 
 function packTwo(a, b, pL, pW) {
-  const results = [];
-
-  // Strategy 1: side by side (crosscut) — both at y depending on their T&G needs
-  for (const [p1, p2] of [[a, b], [b, a]]) {
-    if (p1.w + p2.w <= pL + EPS && Math.max(p1.h, p2.h) <= pW + EPS) {
-      // Try all valid y positions for each piece
-      const y1Options = getYOptions(p1, pW);
-      const y2Options = getYOptions(p2, pW);
-      for (const y1 of y1Options) {
-        for (const y2 of y2Options) {
-          const layout = [
-            { piece: p1, x: 0, y: y1 },
-            { piece: p2, x: p1.w, y: y2 },
-          ];
-          results.push(layout);
-        }
+  for (const oa of pieceOrientations(a)) {
+    for (const ob of pieceOrientations(b)) {
+      // Side by side (a left, b right)
+      if (oa.w + ob.w <= pL + EPS && Math.max(oa.h, ob.h) <= pW + EPS) {
+        return [
+          { piece: a, x: 0, y: 0, pw: oa.w, ph: oa.h },
+          { piece: b, x: oa.w, y: 0, pw: ob.w, ph: ob.h },
+        ];
+      }
+      // Stacked (a top, b bottom)
+      if (Math.max(oa.w, ob.w) <= pL + EPS && oa.h + ob.h <= pW + EPS) {
+        return [
+          { piece: a, x: 0, y: 0, pw: oa.w, ph: oa.h },
+          { piece: b, x: 0, y: oa.h, pw: ob.w, ph: ob.h },
+        ];
       }
     }
   }
-
-  // Strategy 2: stacked (rip) — pieces share the plate width
-  for (const [p1, p2] of [[a, b], [b, a]]) {
-    if (Math.max(p1.w, p2.w) <= pL + EPS && p1.h + p2.h <= pW + EPS) {
-      // p1 at top (y=0), p2 below
-      const layout = [
-        { piece: p1, x: 0, y: 0 },
-        { piece: p2, x: 0, y: p1.h },
-      ];
-      results.push(layout);
-
-      // p2 at top (y=0), p1 below — wait, already covered by swapping p1/p2
-
-      // p1 at bottom (against female edge), p2 above
-      const layout2 = [
-        { piece: p1, x: 0, y: pW - p1.h },
-        { piece: p2, x: 0, y: pW - p1.h - p2.h },
-      ];
-      if (pW - p1.h - p2.h >= -EPS) results.push(layout2);
-    }
-  }
-
-  // Return best (most T&G preserved), or null
-  if (results.length === 0) return null;
-  results.sort((a, b) => countTGPreserved(b, pW) - countTGPreserved(a, pW));
-  return results[0];
-}
-
-function getYOptions(piece, plateW) {
-  // Returns array of valid y positions for this piece
-  const options = new Set();
-  if (piece.needsEdge === 'male' || piece.needsEdge === 'both') {
-    options.add(0); // touch top (male)
-  }
-  if (piece.needsEdge === 'female' || piece.needsEdge === 'both') {
-    options.add(Math.max(0, plateW - piece.h)); // touch bottom (female)
-  }
-  if (piece.needsEdge === 'none') {
-    options.add(0);
-  }
-  // Always try y=0 and y=plateW-h as fallbacks
-  options.add(0);
-  options.add(Math.max(0, plateW - piece.h));
-  return [...options];
+  return null;
 }
 
 function packThree(pieces, pL, pW) {
-  const results = [];
-
+  // Try all permutations of anchor + rest, with all rotation combos
   for (let i = 0; i < 3; i++) {
     const anchor = pieces[i];
     const rest = pieces.filter((_, idx) => idx !== i);
-
-    // Layout A: anchor on the left (full height or positioned per T&G), rest stacked on right
-    if (anchor.h <= pW + EPS) {
-      const remL = pL - anchor.w;
-      if (remL >= -EPS) {
-        for (const [r0, r1] of [[rest[0], rest[1]], [rest[1], rest[0]]]) {
-          // Rest stacked vertically
-          if (Math.max(r0.w, r1.w) <= remL + EPS && r0.h + r1.h <= pW + EPS) {
-            // Try: r0 top, r1 bottom
-            const anchorYOpts = getYOptions(anchor, pW);
-            for (const ay of anchorYOpts) {
-              // r0 at top of remaining area, r1 below
-              const layout1 = [
-                { piece: anchor, x: 0, y: ay },
-                { piece: r0, x: anchor.w, y: 0 },
-                { piece: r1, x: anchor.w, y: r0.h },
-              ];
-              results.push(layout1);
-
-              // r0 at bottom, r1 at top
-              const layout2 = [
-                { piece: anchor, x: 0, y: ay },
-                { piece: r1, x: anchor.w, y: 0 },
-                { piece: r0, x: anchor.w, y: pW - r0.h },
-              ];
-              if (pW - r0.h >= r1.h - EPS) results.push(layout2);
-            }
-          }
-
-          // Rest side by side horizontally
-          if (r0.w + r1.w <= remL + EPS && Math.max(r0.h, r1.h) <= pW + EPS) {
-            const anchorYOpts = getYOptions(anchor, pW);
-            for (const ay of anchorYOpts) {
-              const r0YOpts = getYOptions(r0, pW);
-              const r1YOpts = getYOptions(r1, pW);
-              for (const r0y of r0YOpts) {
-                for (const r1y of r1YOpts) {
-                  const layout = [
-                    { piece: anchor, x: 0, y: ay },
-                    { piece: r0, x: anchor.w, y: r0y },
-                    { piece: r1, x: anchor.w + r0.w, y: r1y },
-                  ];
-                  results.push(layout);
-                }
+    for (const oa of pieceOrientations(anchor)) {
+      for (const or0 of pieceOrientations(rest[0])) {
+        for (const or1 of pieceOrientations(rest[1])) {
+          // Anchor left, rest stacked right
+          if (oa.h <= pW + EPS) {
+            const remL = pL - oa.w;
+            if (remL >= -EPS) {
+              // r0 top-right, r1 bottom-right (stacked)
+              if (Math.max(or0.w, or1.w) <= remL + EPS && or0.h + or1.h <= pW + EPS) {
+                return [
+                  { piece: anchor, x: 0, y: 0, pw: oa.w, ph: oa.h },
+                  { piece: rest[0], x: oa.w, y: 0, pw: or0.w, ph: or0.h },
+                  { piece: rest[1], x: oa.w, y: or0.h, pw: or1.w, ph: or1.h },
+                ];
+              }
+              // r0 and r1 side by side right of anchor
+              if (or0.w + or1.w <= remL + EPS && Math.max(or0.h, or1.h) <= pW + EPS) {
+                return [
+                  { piece: anchor, x: 0, y: 0, pw: oa.w, ph: oa.h },
+                  { piece: rest[0], x: oa.w, y: 0, pw: or0.w, ph: or0.h },
+                  { piece: rest[1], x: oa.w + or0.w, y: 0, pw: or1.w, ph: or1.h },
+                ];
               }
             }
           }
-        }
-      }
-    }
-
-    // Layout B: anchor on top (full width), rest below
-    if (anchor.w <= pL + EPS) {
-      const remH = pW - anchor.h;
-      if (remH >= -EPS) {
-        for (const [r0, r1] of [[rest[0], rest[1]], [rest[1], rest[0]]]) {
-          // Rest side by side below anchor
-          if (r0.w + r1.w <= pL + EPS && Math.max(r0.h, r1.h) <= remH + EPS) {
-            // Anchor at top
-            const r0y = anchor.h;
-            const r1y = anchor.h;
-            // Try anchor at y=0 (top/male)
-            let layout = [
-              { piece: anchor, x: 0, y: 0 },
-              { piece: r0, x: 0, y: r0y },
-              { piece: r1, x: r0.w, y: r1y },
-            ];
-            results.push(layout);
-
-            // Try with rest at bottom (female edge)
-            const restBaseY = pW - Math.max(r0.h, r1.h);
-            if (restBaseY >= anchor.h - EPS) {
-              layout = [
-                { piece: anchor, x: 0, y: 0 },
-                { piece: r0, x: 0, y: pW - r0.h },
-                { piece: r1, x: r0.w, y: pW - r1.h },
+          // Anchor top, rest below side by side
+          if (oa.w <= pL + EPS) {
+            const remH = pW - oa.h;
+            if (remH >= -EPS && or0.w + or1.w <= pL + EPS && Math.max(or0.h, or1.h) <= remH + EPS) {
+              return [
+                { piece: anchor, x: 0, y: 0, pw: oa.w, ph: oa.h },
+                { piece: rest[0], x: 0, y: oa.h, pw: or0.w, ph: or0.h },
+                { piece: rest[1], x: or0.w, y: oa.h, pw: or1.w, ph: or1.h },
               ];
-              results.push(layout);
             }
-
-            // Anchor at bottom
-            layout = [
-              { piece: anchor, x: 0, y: pW - anchor.h },
-              { piece: r0, x: 0, y: 0 },
-              { piece: r1, x: r0.w, y: 0 },
-            ];
-            results.push(layout);
-          }
-
-          // Rest stacked vertically below
-          if (Math.max(r0.w, r1.w) <= pL + EPS && r0.h + r1.h <= remH + EPS) {
-            let layout = [
-              { piece: anchor, x: 0, y: 0 },
-              { piece: r0, x: 0, y: anchor.h },
-              { piece: r1, x: 0, y: anchor.h + r0.h },
-            ];
-            results.push(layout);
           }
         }
       }
     }
   }
-
-  if (results.length === 0) return null;
-  results.sort((a, b) => countTGPreserved(b, pW) - countTGPreserved(a, pW));
-  return results[0];
+  return null;
 }
 
 function packFour(pieces, pL, pW) {
-  const results = [];
+  // Try 2+2 splits with all rotation combos
   const splits = [
-    [[0,1],[2,3]], [[0,2],[1,3]], [[0,3],[1,2]]
+    [[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]]
   ];
-
   for (const [g1idx, g2idx] of splits) {
     const g1 = g1idx.map(i => pieces[i]);
     const g2 = g2idx.map(i => pieces[i]);
-
-    const g1w = g1[0].w + g1[1].w;
-    const g1h = Math.max(g1[0].h, g1[1].h);
-    const g2w = g2[0].w + g2[1].w;
-    const g2h = Math.max(g2[0].h, g2[1].h);
-
-    if (Math.max(g1w, g2w) <= pL + EPS && g1h + g2h <= pW + EPS) {
-      // g1 on top, g2 on bottom
-      let layout = [
-        { piece: g1[0], x: 0, y: 0 },
-        { piece: g1[1], x: g1[0].w, y: 0 },
-        { piece: g2[0], x: 0, y: g1h },
-        { piece: g2[1], x: g2[0].w, y: g1h },
-      ];
-      results.push(layout);
-
-      // g2 on top, g1 on bottom
-      layout = [
-        { piece: g2[0], x: 0, y: 0 },
-        { piece: g2[1], x: g2[0].w, y: 0 },
-        { piece: g1[0], x: 0, y: g2h },
-        { piece: g1[1], x: g1[0].w, y: g2h },
-      ];
-      results.push(layout);
-
-      // g1 top, g2 at bottom edge
-      layout = [
-        { piece: g1[0], x: 0, y: 0 },
-        { piece: g1[1], x: g1[0].w, y: 0 },
-        { piece: g2[0], x: 0, y: pW - g2[0].h },
-        { piece: g2[1], x: g2[0].w, y: pW - g2[1].h },
-      ];
-      results.push(layout);
-    }
-  }
-
-  // Also try 3+1 splits
-  for (let i = 0; i < 4; i++) {
-    const single = pieces[i];
-    const three = pieces.filter((_, idx) => idx !== i);
-
-    if (single.w <= pL + EPS) {
-      const threeResult = packThree(three, pL, pW - single.h);
-      if (threeResult) {
-        // Single at top, three below
-        let layout = [
-          { piece: single, x: 0, y: 0 },
-          ...threeResult.map(r => ({ piece: r.piece, x: r.x, y: r.y + single.h })),
-        ];
-        results.push(layout);
-
-        // Single at bottom
-        layout = [
-          { piece: single, x: 0, y: pW - single.h },
-          ...threeResult.map(r => ({ piece: r.piece, x: r.x, y: r.y })),
-        ];
-        results.push(layout);
-      }
-    }
-    if (single.h <= pW + EPS) {
-      const threeResult = packThree(three, pL - single.w, pW);
-      if (threeResult) {
-        const singleYOpts = getYOptions(single, pW);
-        for (const sy of singleYOpts) {
-          const layout = [
-            { piece: single, x: 0, y: sy },
-            ...threeResult.map(r => ({ piece: r.piece, x: r.x + single.w, y: r.y })),
-          ];
-          results.push(layout);
+    for (const o0 of pieceOrientations(g1[0])) {
+      for (const o1 of pieceOrientations(g1[1])) {
+        for (const o2 of pieceOrientations(g2[0])) {
+          for (const o3 of pieceOrientations(g2[1])) {
+            const g1w = o0.w + o1.w, g1h = Math.max(o0.h, o1.h);
+            const g2w = o2.w + o3.w, g2h = Math.max(o2.h, o3.h);
+            // Two rows of pairs
+            if (Math.max(g1w, g2w) <= pL + EPS && g1h + g2h <= pW + EPS) {
+              return [
+                { piece: g1[0], x: 0, y: 0, pw: o0.w, ph: o0.h },
+                { piece: g1[1], x: o0.w, y: 0, pw: o1.w, ph: o1.h },
+                { piece: g2[0], x: 0, y: g1h, pw: o2.w, ph: o2.h },
+                { piece: g2[1], x: o2.w, y: g1h, pw: o3.w, ph: o3.h },
+              ];
+            }
+            // Two columns of pairs
+            if (g1h + g2h <= pL + EPS && Math.max(g1w, g2w) <= pW + EPS) {
+              // Transpose layout
+            }
+          }
         }
       }
     }
   }
-
-  if (results.length === 0) return null;
-  results.sort((a, b) => countTGPreserved(b, pW) - countTGPreserved(a, pW));
-  return results[0];
+  // 3+1 splits
+  for (let i = 0; i < 4; i++) {
+    const single = pieces[i];
+    const three = pieces.filter((_, idx) => idx !== i);
+    for (const os of pieceOrientations(single)) {
+      // Single on top, three below
+      if (os.w <= pL + EPS && os.h <= pW + EPS) {
+        const r = packThree(three, pL, pW - os.h);
+        if (r) {
+          return [
+            { piece: single, x: 0, y: 0, pw: os.w, ph: os.h },
+            ...r.map(item => ({ ...item, y: item.y + os.h })),
+          ];
+        }
+      }
+      // Single on left, three to the right
+      if (os.w <= pL + EPS && os.h <= pW + EPS) {
+        const r = packThree(three, pL - os.w, pW);
+        if (r) {
+          return [
+            { piece: single, x: 0, y: 0, pw: os.w, ph: os.h },
+            ...r.map(item => ({ ...item, x: item.x + os.w })),
+          ];
+        }
+      }
+    }
+  }
+  return null;
 }
 
-function solvePlateAssignments(pieces, osbL, osbW) {
-  const n = pieces.length;
-  const solutions = [];
-
-  for (let mask = 1; mask < (1 << n) - 1; mask++) {
-    const p1 = [], p2 = [];
-    for (let i = 0; i < n; i++) {
-      if (mask & (1 << i)) p1.push(pieces[i]);
-      else p2.push(pieces[i]);
+function packShelf(pieces, pL, pW) {
+  // Try both normal and rotated for each piece
+  const sorted = [...pieces].sort((a, b) => (b.w * b.h) - (a.w * a.h));
+  const placed = [];
+  let curX = 0, curY = 0, rowH = 0;
+  for (const p of sorted) {
+    let fit = false;
+    for (const o of pieceOrientations(p)) {
+      if (curX + o.w <= pL + EPS && curY + o.h <= pW + EPS) {
+        placed.push({ piece: p, x: curX, y: curY, pw: o.w, ph: o.h });
+        rowH = Math.max(rowH, o.h);
+        curX += o.w;
+        fit = true;
+        break;
+      }
+      if (o.w <= pL + EPS && curY + rowH + o.h <= pW + EPS) {
+        curY += rowH;
+        curX = 0; rowH = 0;
+        placed.push({ piece: p, x: curX, y: curY, pw: o.w, ph: o.h });
+        rowH = Math.max(rowH, o.h);
+        curX += o.w;
+        fit = true;
+        break;
+      }
     }
+    if (!fit) return null;
+  }
+  return placed;
+}
 
-    const layout1 = packOnePlate(p1, osbL, osbW);
-    const layout2 = packOnePlate(p2, osbL, osbW);
+/**
+ * Assign pieces to plates using brute-force for small counts, greedy for large.
+ * Returns { plates: [...], totalPlatesUsed, success, feedback }
+ */
+function assignPlatePacking(pieces, plateL, plateW, maxPlates) {
+  const n = pieces.length;
 
-    if (layout1 && layout2) {
-      const tgScore = countTGPreserved(layout1, osbW) + countTGPreserved(layout2, osbW);
-      const balance = Math.abs(p1.length - p2.length);
-      const usedArea = pieces.reduce((s, p) => s + p.w * p.h, 0);
-      const totalArea = 2 * osbL * osbW;
-      const wastePct = (totalArea - usedArea) / totalArea;
+  // For small piece counts (≤6), try brute-force partitioning to find optimal
+  if (n <= 6 && maxPlates >= 2) {
+    const best = bruteForceAssign(pieces, plateL, plateW, maxPlates);
+    if (best) return best;
+  }
 
-      // Score: maximize T&G (subtract from score since lower=better), then balance, then waste
-      const score = -tgScore * 10 + balance + wastePct;
+  // Greedy fallback: sort by area descending, assign to first plate with room
+  const sorted = [...pieces].sort((a, b) => (b.w * b.h) - (a.w * a.h));
+  const plates = [];
 
-      solutions.push({
-        plate1Pieces: p1,
-        plate2Pieces: p2,
-        plate1Layout: layout1,
-        plate2Layout: layout2,
-        tgScore,
-        tgMax: pieces.length, // max possible T&G count
-        score,
-        mask,
-      });
+  for (const p of sorted) {
+    let placed = false;
+    for (const plate of plates) {
+      const testPieces = [...plate.pieces, p];
+      const layout = packOnePlate(testPieces, plateL, plateW);
+      if (layout) {
+        plate.pieces = testPieces;
+        plate.layout = layout;
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      if (plates.length >= maxPlates) {
+        const needed = estimateMinPlates(pieces, plateL, plateW);
+        return {
+          plates,
+          totalPlatesUsed: plates.length,
+          success: false,
+          feedback: `Need at least ${needed} plates but only ${maxPlates} available`,
+        };
+      }
+      const layout = packOnePlate([p], plateL, plateW);
+      if (!layout) {
+        // Piece is too large for the plate in any orientation
+        return {
+          plates,
+          totalPlatesUsed: plates.length,
+          success: false,
+          feedback: `Piece ${p.name} (${p.w.toFixed(1)}×${p.h.toFixed(1)}) doesn't fit on plate (${plateL}×${plateW})`,
+        };
+      }
+      plates.push({ pieces: [p], layout });
     }
   }
 
-  solutions.sort((a, b) => a.score - b.score);
-  return solutions;
+  return { plates, totalPlatesUsed: plates.length, success: true, feedback: null };
 }
 
-// ===== 3-PIECE MODE =====
 /**
- * Try a 3-piece approach: merge 2A+2D into a single right strip "R".
- * Only works when row1Joint == row2Joint (single vertical cut).
- * R is rotated 90° on plate 2 to fit in the leftover space above 2C.
+ * Brute-force partition N pieces into at most maxPlates groups,
+ * each fitting on one plate. Returns best assignment or null.
  */
-function tryThreePieceMode(s) {
-  if (Math.abs(s.row1Joint - s.row2Joint) > EPS) return null;
+function bruteForceAssign(pieces, plateL, plateW, maxPlates) {
+  const n = pieces.length;
+  // Assign each piece to a plate index [0, maxPlates-1]
+  // Total combos: maxPlates^n (bounded since n ≤ 6, maxPlates ≤ ~10)
+  const limit = Math.min(maxPlates, n); // no point using more plates than pieces
+  const totalCombos = Math.pow(limit, n);
+  if (totalCombos > 100000) return null; // safety limit
 
-  const J = s.row1Joint;
-  const leftRow1H = s.row1Width;
-  const leftRow2H = s.frameD - s.row1Width;
-  const rightW = s.frameW - J;
+  let bestResult = null;
+  let bestPlateCount = Infinity;
 
-  const piece1A = { name: '1A', w: J, h: leftRow1H, use: 'Left back', color: COLORS['1A'], row: 1 };
-  const piece2C = { name: '2C', w: J, h: leftRow2H, use: 'Left front', color: COLORS['2C'], row: 2 };
-  const pieceR  = { name: 'R',  w: rightW, h: s.frameD, use: 'Right strip (2A+2D merged)', color: COLORS['R'], row: 0 };
+  const assignment = new Array(n).fill(0);
+  for (let combo = 0; combo < totalCombos; combo++) {
+    // Decode combo into assignment
+    let c = combo;
+    for (let i = 0; i < n; i++) {
+      assignment[i] = c % limit;
+      c = Math.floor(c / limit);
+    }
 
-  piece1A.needsEdge = getNeedsEdge('1A', piece1A.h, s.osbW);
-  piece2C.needsEdge = getNeedsEdge('2C', piece2C.h, s.osbW);
-  pieceR.needsEdge = 'none';
+    // Group pieces by plate
+    const groups = [];
+    let usedPlates = 0;
+    for (let i = 0; i < n; i++) {
+      while (groups.length <= assignment[i]) groups.push([]);
+      groups[assignment[i]].push(pieces[i]);
+    }
+    usedPlates = groups.filter(g => g.length > 0).length;
+    if (usedPlates >= bestPlateCount) continue;
 
-  const pieces = [piece1A, piece2C, pieceR];
+    // Check all groups fit
+    let allFit = true;
+    const layouts = [];
+    for (const group of groups) {
+      if (group.length === 0) { layouts.push(null); continue; }
+      const layout = packOnePlate(group, plateL, plateW);
+      if (!layout) { allFit = false; break; }
+      layouts.push(layout);
+    }
 
-  // Check: can 1A fit on plate 1?
-  if (piece1A.w > s.osbL + EPS || piece1A.h > s.osbW + EPS) return null;
+    if (allFit && usedPlates < bestPlateCount) {
+      bestPlateCount = usedPlates;
+      const plates = [];
+      for (let gi = 0; gi < groups.length; gi++) {
+        if (groups[gi].length > 0) {
+          plates.push({ pieces: groups[gi], layout: layouts[gi] });
+        }
+      }
+      bestResult = { plates, totalPlatesUsed: usedPlates, success: true, feedback: null };
+      if (usedPlates <= 1) break; // can't do better
+    }
+  }
 
-  // Check: can 2C + R(rotated) fit on plate 2?
-  // R rotated on plate: frameD along plate length, rightW along plate width
-  const rOnPlateW = s.frameD;
-  const rOnPlateH = rightW;
+  return bestResult;
+}
 
-  if (piece2C.w > s.osbL + EPS || piece2C.h > s.osbW + EPS) return null;
-  if (rOnPlateW > s.osbL + EPS) return null;
-  if (rOnPlateH + piece2C.h > s.osbW + EPS) return null;
+function estimateMinPlates(pieces, plateL, plateW) {
+  // Try brute-force to find actual minimum
+  if (pieces.length <= 6) {
+    for (let k = 1; k <= pieces.length; k++) {
+      const result = bruteForceAssign(pieces, plateL, plateW, k);
+      if (result) return k;
+    }
+  }
+  const plateArea = plateL * plateW;
+  const totalArea = pieces.reduce((s, p) => s + p.w * p.h, 0);
+  return Math.max(Math.ceil(totalArea / plateArea), 1);
+}
 
-  // Build plate layouts
-  const y1A = piece1A.needsEdge === 'female' ? (s.osbW - piece1A.h) : 0;
-  const plate1Layout = [{ piece: piece1A, x: 0, y: y1A }];
+/**
+ * Generate grid with optimized (non-uniform) column widths.
+ * Tries various split points to find piece dimensions that pack well.
+ * Returns array of grid candidates (same structure as generateGrid).
+ */
+function generateOptimizedGrids(frameLen, frameSpan, plateL, plateW, joists, lumberW, orientation, isRotated) {
+  const results = [];
+  const numRows = Math.ceil(frameSpan / plateW);
 
-  // Plate 2: R(rotated) at top, 2C at bottom (female edge)
-  const y2C = s.osbW - piece2C.h;
-  const pieceRPlate = { ...pieceR, w: rOnPlateW, h: rOnPlateH, rotated: true,
-                         origW: pieceR.w, origH: pieceR.h };
-  const plate2Layout = [
-    { piece: pieceRPlate, x: 0, y: 0 },
-    { piece: piece2C, x: 0, y: y2C },
-  ];
+  // Helper: check if ALL pieces from given column widths fit on a plate
+  function allPiecesFit(colWidths) {
+    for (const cw of colWidths) {
+      for (let r = 0; r < numRows; r++) {
+        const rh = Math.min(plateW, frameSpan - r * plateW);
+        const fitsNormal = cw <= plateL + EPS && rh <= plateW + EPS;
+        const fitsRotated = rh <= plateL + EPS && cw <= plateW + EPS;
+        if (!fitsNormal && !fitsRotated) return false;
+      }
+    }
+    return true;
+  }
+
+  // For numCols=1 (no vertical cuts), just one option
+  if (frameLen <= plateL + EPS && allPiecesFit([frameLen])) {
+    results.push(generateGridWithCols(frameLen, frameSpan, [frameLen], plateW, joists, lumberW, orientation, isRotated, plateL));
+  }
+
+  // For numCols=2: try many split positions
+  if (frameLen > plateL + EPS || true) { // always try 2 cols
+    const splits = new Set();
+
+    // Standard plate-width split
+    if (plateL < frameLen) splits.add(Math.round(plateL * 10) / 10);
+
+    // Half split
+    splits.add(Math.round(frameLen / 2 * 10) / 10);
+
+    // Split at plateW (short plate dimension) — key for side-by-side packing!
+    if (plateW < frameLen) splits.add(Math.round(plateW * 10) / 10);
+
+    // Splits at joist positions
+    for (const j of joists) {
+      if (j > EPS && j < frameLen - EPS) splits.add(Math.round(j * 10) / 10);
+    }
+
+    // Split at plateL - small offsets (to create cuttable pairs)
+    const halfPlateL = plateL / 2;
+    if (halfPlateL > EPS && halfPlateL < frameLen - EPS) splits.add(Math.round(halfPlateL * 10) / 10);
+
+    for (const splitAt of splits) {
+      if (splitAt <= EPS || splitAt >= frameLen - EPS) continue;
+      const colWidths = [splitAt, frameLen - splitAt];
+      if (!allPiecesFit(colWidths)) continue;
+      results.push(generateGridWithCols(frameLen, frameSpan, colWidths, plateW, joists, lumberW, orientation, isRotated, plateL));
+    }
+  }
+
+  // For numCols=3: try uniform thirds and joist-aligned
+  if (frameLen > plateL * 2 + EPS) {
+    const third = frameLen / 3;
+    const colWidths = [third, third, frameLen - 2 * third];
+    if (allPiecesFit(colWidths)) {
+      results.push(generateGridWithCols(frameLen, frameSpan, colWidths, plateW, joists, lumberW, orientation, isRotated, plateL));
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Generate grid given explicit column widths.
+ */
+function generateGridWithCols(frameLen, frameSpan, colWidths, plateW, joists, lumberW, orientation, isRotated, plateL) {
+  const numRows = Math.ceil(frameSpan / plateW);
+  const numCols = colWidths.length;
+
+  const pieces = [];
+  let colX = 0;
+  for (let c = 0; c < numCols; c++) {
+    const colW = colWidths[c];
+    for (let r = 0; r < numRows; r++) {
+      const rowY = r * plateW;
+      const rowH = Math.min(plateW, frameSpan - rowY);
+      pieces.push({
+        name: `R${r + 1}C${c + 1}`,
+        row: r, col: c,
+        fx: colX, fy: rowY,
+        w: colW, h: rowH,
+        color: PALETTE[(r * numCols + c) % PALETTE.length],
+        isFullPlate: Math.abs(colW - plateL) < EPS && Math.abs(rowH - plateW) < EPS,
+        needsCutW: colW < plateL - EPS,
+        needsCutH: rowH < plateW - EPS,
+      });
+    }
+    colX += colW;
+  }
+
+  // Vertical cuts between columns
+  const vCuts = [];
+  let cutX = 0;
+  for (let c = 0; c < numCols - 1; c++) {
+    cutX += colWidths[c];
+    if (cutX < frameLen - EPS) {
+      vCuts.push({ pos: cutX, onJoist: nearJoist(cutX, joists, lumberW) });
+    }
+  }
+
+  // Horizontal cuts between rows
+  const hCuts = [];
+  for (let r = 1; r < numRows; r++) {
+    const cutPos = r * plateW;
+    if (cutPos < frameSpan - EPS) {
+      hCuts.push({ pos: cutPos });
+    }
+  }
+
+  const joistAligned = vCuts.filter(c => c.onJoist).length;
+  const joistTotal = vCuts.length;
+  const totalCuts = vCuts.length + hCuts.length;
 
   return {
-    mode: '3-piece',
-    pieces,
-    pieceR,
-    plate1Pieces: [piece1A],
-    plate2Pieces: [piece2C, pieceR],
-    plate1Layout,
-    plate2Layout,
-    tgScore: (checkTG(plate1Layout[0], s.osbW) ? 1 : 0) +
-             (checkTG(plate2Layout[1], s.osbW) ? 1 : 0),
-    tgMax: 2,
+    pieces, vCuts, hCuts,
+    numRows, numCols,
+    totalPlates: pieces.length,
+    totalCuts,
+    orientation, isRotated,
+    plateL, plateW,
+    frameLen, frameSpan,
+    joistAligned, joistTotal,
   };
+}
+
+/**
+ * Generate merged variants for a grid where one or more columns span full frameSpan.
+ * For a grid with numRows > 1, this replaces per-row pieces in selected columns
+ * with a single full-depth piece, reducing total piece count.
+ * Returns array of new grid objects (merged variants).
+ */
+function generateMergedVariants(grid, plateL, plateW) {
+  if (grid.numRows <= 1) return []; // nothing to merge
+  const numCols = grid.numCols;
+  const variants = [];
+
+  // Get column widths from the grid pieces
+  const colWidths = [];
+  for (let c = 0; c < numCols; c++) {
+    const piece = grid.pieces.find(p => p.col === c);
+    if (piece) colWidths.push(piece.w);
+  }
+
+  // Generate all non-empty subsets of columns to merge (2^numCols - 1 subsets, minus the empty set)
+  const totalSubsets = (1 << numCols) - 1; // skip 0 (no merge)
+  for (let mask = 1; mask <= totalSubsets; mask++) {
+    const mergedCols = new Set();
+    let valid = true;
+
+    for (let c = 0; c < numCols; c++) {
+      if (mask & (1 << c)) {
+        // Check if merged piece (colWidth × frameSpan) fits on a plate in some rotation
+        const cw = colWidths[c];
+        const fitsNormal = cw <= plateL + EPS && grid.frameSpan <= plateW + EPS;
+        const fitsRotated = grid.frameSpan <= plateL + EPS && cw <= plateW + EPS;
+        if (!fitsNormal && !fitsRotated) { valid = false; break; }
+        mergedCols.add(c);
+      }
+    }
+    if (!valid || mergedCols.size === 0) continue;
+
+    // Build new pieces array
+    const pieces = [];
+    let colX = 0;
+    let colorIdx = 0;
+    for (let c = 0; c < numCols; c++) {
+      const cw = colWidths[c];
+      if (mergedCols.has(c)) {
+        // Single full-depth piece for this column
+        pieces.push({
+          name: `C${c + 1}`,
+          row: -1, col: c,
+          fx: colX, fy: 0,
+          w: cw, h: grid.frameSpan,
+          color: PALETTE[colorIdx % PALETTE.length],
+          isFullPlate: Math.abs(cw - plateL) < EPS && Math.abs(grid.frameSpan - plateW) < EPS,
+          needsCutW: cw < plateL - EPS,
+          needsCutH: grid.frameSpan < plateW - EPS,
+        });
+        colorIdx++;
+      } else {
+        // Keep per-row pieces for this column
+        for (let r = 0; r < grid.numRows; r++) {
+          const rowY = r * grid.plateW;
+          const rowH = Math.min(grid.plateW, grid.frameSpan - rowY);
+          pieces.push({
+            name: `R${r + 1}C${c + 1}`,
+            row: r, col: c,
+            fx: colX, fy: rowY,
+            w: cw, h: rowH,
+            color: PALETTE[colorIdx % PALETTE.length],
+            isFullPlate: Math.abs(cw - plateL) < EPS && Math.abs(rowH - grid.plateW) < EPS,
+            needsCutW: cw < plateL - EPS,
+            needsCutH: rowH < grid.plateW - EPS,
+          });
+          colorIdx++;
+        }
+      }
+      colX += cw;
+    }
+
+    // Recalculate cuts
+    // Vertical cuts stay the same (between columns)
+    const vCuts = [...grid.vCuts];
+
+    // Horizontal cuts: only apply across unmerged columns
+    // If ALL columns are merged, no horizontal cuts needed
+    const allMerged = mergedCols.size === numCols;
+    const hCuts = allMerged ? [] : [...grid.hCuts];
+
+    const totalCuts = vCuts.length + hCuts.length;
+
+    variants.push({
+      pieces, vCuts, hCuts,
+      numRows: grid.numRows, numCols,
+      totalPlates: pieces.length,
+      totalCuts,
+      orientation: grid.orientation,
+      isRotated: grid.isRotated,
+      plateL: grid.plateL, plateW: grid.plateW,
+      frameLen: grid.frameLen, frameSpan: grid.frameSpan,
+      joistAligned: grid.joistAligned, joistTotal: grid.joistTotal,
+      mergedCols, // Set of merged column indices
+    });
+  }
+
+  return variants;
 }
 
 // ===== MAIN COMPUTE =====
 function computeLayout(s) {
-  const leftRow1H = s.row1Width;
-  const leftRow2H = s.frameD - s.row1Width;
-  const rightRow1H = s.rightSplitDepth;
-  const rightRow2H = s.frameD - s.rightSplitDepth;
-  const isStepped = Math.abs(s.row1Width - s.rightSplitDepth) > EPS;
-
   const joists = [];
   for (let i = 0; i < s.joistCount; i++) {
     joists.push(s.joistSpacing * (i + 1));
   }
 
-  const pieces = [
-    { name: '1A', w: s.row1Joint, h: leftRow1H, use: isStepped ? 'Left back' : 'Row 1 left', color: COLORS['1A'], row: 1 },
-    { name: '2A', w: s.frameW - s.row1Joint, h: rightRow1H, use: isStepped ? 'Right back' : 'Row 1 right', color: COLORS['2A'], row: 1 },
-    { name: '2C', w: s.row2Joint, h: leftRow2H, use: isStepped ? 'Left front' : 'Row 2 left', color: COLORS['2C'], row: 2 },
-    { name: '2D', w: s.frameW - s.row2Joint, h: rightRow2H, use: isStepped ? 'Right front' : 'Row 2 right', color: COLORS['2D'], row: 2 },
-  ];
-
-  // Assign T&G needs
-  for (const p of pieces) {
-    p.needsEdge = getNeedsEdge(p.name, p.h, s.osbW);
-  }
-
   const issues = [];
-  const halfLumber = s.lumberW / 2;
+  const warnings = [];
 
-  function nearJoist(pos) {
-    for (const j of joists) {
-      if (Math.abs(pos - j) <= halfLumber) return true;
+  if (s.frameW <= 0 || s.frameD <= 0) { issues.push('Frame dimensions must be positive'); }
+  if (s.osbL <= 0 || s.osbW <= 0) { issues.push('Plate dimensions must be positive'); }
+  if (s.plateCount < 1) { issues.push('Need at least 1 plate'); }
+  if (issues.length > 0) {
+    return { joists, pieces: [], grid: null, assignment: null, issues, warnings, valid: false, candidates: [] };
+  }
+
+  // Generate all candidate grids: 4 orientations × multiple cut positions
+  const candidates = [];
+
+  // Horizontal: plates run along frameW, rows stack along frameD
+  candidates.push(...generateOptimizedGrids(s.frameW, s.frameD, s.osbL, s.osbW, joists, s.lumberW, 'horizontal', false));
+  candidates.push(...generateOptimizedGrids(s.frameW, s.frameD, s.osbW, s.osbL, joists, s.lumberW, 'horizontal (rotated)', true));
+
+  // Vertical: plates run along frameD, rows stack along frameW
+  candidates.push(...generateOptimizedGrids(s.frameD, s.frameW, s.osbL, s.osbW, joists, s.lumberW, 'vertical', false));
+  candidates.push(...generateOptimizedGrids(s.frameD, s.frameW, s.osbW, s.osbL, joists, s.lumberW, 'vertical (rotated)', true));
+
+  // Also add the uniform-grid candidates as baseline
+  candidates.push(generateGrid(s.frameW, s.frameD, s.osbL, s.osbW, joists, s.lumberW, 'horizontal', false));
+  candidates.push(generateGrid(s.frameW, s.frameD, s.osbW, s.osbL, joists, s.lumberW, 'horizontal (rotated)', true));
+  candidates.push(generateGrid(s.frameD, s.frameW, s.osbL, s.osbW, joists, s.lumberW, 'vertical', false));
+  candidates.push(generateGrid(s.frameD, s.frameW, s.osbW, s.osbL, joists, s.lumberW, 'vertical (rotated)', true));
+
+  // Generate merged variants for grids with multiple rows
+  const baseCandidateCount = candidates.length;
+  for (let i = 0; i < baseCandidateCount; i++) {
+    const grid = candidates[i];
+    if (grid.numRows > 1) {
+      const pL = grid.isRotated ? s.osbW : s.osbL;
+      const pW = grid.isRotated ? s.osbL : s.osbW;
+      const merged = generateMergedVariants(grid, pL, pW);
+      candidates.push(...merged);
     }
-    if (pos <= halfLumber || Math.abs(pos - s.frameW) <= halfLumber) return true;
-    return false;
   }
 
-  const row1OnJoist = nearJoist(s.row1Joint);
-  const row2OnJoist = nearJoist(s.row2Joint);
-  if (!row1OnJoist) issues.push(`Row 1 joint (${s.row1Joint} cm) not on a joist center`);
-  if (!row2OnJoist) issues.push(`Row 2 joint (${s.row2Joint} cm) not on a joist center`);
+  // Try packing for each candidate and score by actual plates used
+  const results = candidates.map(grid => {
+    const pL = grid.isRotated ? s.osbW : s.osbL;
+    const pW = grid.isRotated ? s.osbL : s.osbW;
+    const assignment = assignPlatePacking(grid.pieces, pL, pW, s.plateCount);
+    return { grid, assignment, packPlateL: pL, packPlateW: pW };
+  });
 
-  // Left side depth checks
-  if (leftRow2H <= 0) issues.push(`Left front depth is ${leftRow2H.toFixed(1)} cm — must be positive`);
-  if (leftRow1H <= 0) issues.push(`Left depth must be positive`);
-  if (leftRow1H > s.osbW + EPS) issues.push(`Left depth (${leftRow1H} cm) > plate width (${s.osbW} cm)`);
-  if (leftRow2H > s.osbW + EPS) issues.push(`Left front depth (${leftRow2H.toFixed(1)} cm) > plate width (${s.osbW} cm)`);
-  // Right side depth checks
-  if (rightRow2H <= 0) issues.push(`Right front depth is ${rightRow2H.toFixed(1)} cm — must be positive`);
-  if (rightRow1H <= 0) issues.push(`Right depth must be positive`);
-  if (rightRow1H > s.osbW + EPS) issues.push(`Right depth (${rightRow1H} cm) > plate width (${s.osbW} cm)`);
-  if (rightRow2H > s.osbW + EPS) issues.push(`Right front depth (${rightRow2H.toFixed(1)} cm) > plate width (${s.osbW} cm)`);
+  // Sort: success → fewest plates used → fewest pieces → fewest frame cuts → most joist-aligned
+  results.sort((a, b) => {
+    const aOk = a.assignment.success ? 0 : 1;
+    const bOk = b.assignment.success ? 0 : 1;
+    if (aOk !== bOk) return aOk - bOk;
+    if (a.assignment.totalPlatesUsed !== b.assignment.totalPlatesUsed)
+      return a.assignment.totalPlatesUsed - b.assignment.totalPlatesUsed;
+    // Fewest pieces (simplest construction)
+    if (a.grid.totalPlates !== b.grid.totalPlates)
+      return a.grid.totalPlates - b.grid.totalPlates;
+    // Fewest frame cuts
+    if (a.grid.totalCuts !== b.grid.totalCuts)
+      return a.grid.totalCuts - b.grid.totalCuts;
+    // Most joist-aligned among remaining
+    const aJoist = a.grid.joistTotal > 0 ? a.grid.joistAligned / a.grid.joistTotal : 1;
+    const bJoist = b.grid.joistTotal > 0 ? b.grid.joistAligned / b.grid.joistTotal : 1;
+    if (Math.abs(aJoist - bJoist) > 0.01) return bJoist - aJoist;
+    return 0;
+  });
 
-  for (const p of pieces) {
-    if (p.w > s.osbL + EPS || p.h > s.osbW + EPS) {
-      issues.push(`${p.name} (${p.w.toFixed(1)}x${p.h.toFixed(1)}) exceeds plate (${s.osbL}x${s.osbW})`);
+  const bestResult = results[0];
+  const best = bestResult.grid;
+  const assignment = bestResult.assignment;
+  const packPlateL = bestResult.packPlateL;
+  const packPlateW = bestResult.packPlateW;
+
+  if (!assignment.success) {
+    issues.push(assignment.feedback);
+  }
+
+  // Joist alignment warnings
+  for (const cut of best.vCuts) {
+    if (!cut.onJoist) {
+      warnings.push(`Cut at ${cut.pos.toFixed(1)} cm not on a joist — consider adding support`);
     }
   }
 
-  const stagger = Math.abs(s.row1Joint - s.row2Joint);
-  let staggerWarn = '';
-  if (stagger < 15 && stagger > 0.5) staggerWarn = `Stagger only ${stagger.toFixed(1)} cm — recommend >= 15 cm`;
-  if (stagger < 0.5) staggerWarn = 'Joints aligned (no stagger) — weaker';
-
-  const solutions = solvePlateAssignments(pieces, s.osbL, s.osbW);
-
-  // Try 3-piece mode as fallback when 4-piece fails
-  let threePieceSolution = null;
-  if (solutions.length === 0 && issues.length === 0) {
-    threePieceSolution = tryThreePieceMode(s);
-  }
-
-  // Analyze why 4-piece packing fails (only when both 4-piece and 3-piece fail)
-  let failedSplits = null;
-  if (solutions.length === 0 && !threePieceSolution && issues.length === 0) {
-    issues.push('No valid plate assignment found — pieces cannot be packed onto 2 plates');
-    failedSplits = analyzeFailures(pieces, s.osbL, s.osbW);
-  }
-
-  const totalOSB = 2 * s.osbL * s.osbW;
-  const activePieces = threePieceSolution ? threePieceSolution.pieces : pieces;
-  const usedArea = activePieces.reduce((sum, p) => sum + p.w * p.h, 0);
-  const wasteArea = totalOSB - usedArea;
-  const wastePct = (wasteArea / totalOSB * 100);
-
-  const valid = issues.length === 0 && (solutions.length > 0 || threePieceSolution);
+  // Waste calculation
+  const totalPlateArea = assignment.totalPlatesUsed * packPlateL * packPlateW;
+  const usedArea = best.pieces.reduce((sum, p) => sum + p.w * p.h, 0);
+  const wasteArea = totalPlateArea - usedArea;
+  const wastePct = totalPlateArea > 0 ? (wasteArea / totalPlateArea * 100) : 0;
 
   return {
-    joists, pieces, solutions, threePieceSolution, failedSplits,
-    issues, valid, staggerWarn, isStepped,
-    leftRow1H, leftRow2H, rightRow1H, rightRow2H,
+    joists,
+    pieces: best.pieces,
+    grid: best,
+    assignment: assignment.success ? assignment : null,
+    issues, warnings,
+    valid: issues.length === 0 && assignment.success,
+    candidates, results,
     wasteArea, wastePct,
-    row1OnJoist, row2OnJoist,
+    packPlateL, packPlateW,
   };
 }
 
@@ -1039,6 +1070,13 @@ function drawFrame(canvas, s, layout) {
   const W = rect.width, H = rect.height;
   ctx.clearRect(0, 0, W, H);
 
+  if (!layout.grid) return;
+
+  const grid = layout.grid;
+  const isVertical = grid.orientation.startsWith('vertical');
+
+  // For drawing, we always show the frame as W x D with joists along W
+  // In vertical mode, the grid's frameLen is along D and frameSpan is along W
   const pad = 50;
   const sc = Math.min((W - pad * 2) / s.frameW, (H - pad * 2) / s.frameD);
   const offX = (W - s.frameW * sc) / 2;
@@ -1046,7 +1084,7 @@ function drawFrame(canvas, s, layout) {
   const tx = x => offX + x * sc;
   const ty = y => offY + y * sc;
 
-  // Frame
+  // Frame outline
   ctx.strokeStyle = COLORS.frame;
   ctx.lineWidth = 3;
   ctx.strokeRect(tx(0), ty(0), s.frameW * sc, s.frameD * sc);
@@ -1062,131 +1100,84 @@ function drawFrame(canvas, s, layout) {
   // Frame beams
   ctx.lineWidth = s.lumberW * sc;
   ctx.strokeStyle = COLORS.frame;
-  [[0,0,0,s.frameD],[s.frameW,0,s.frameW,s.frameD],[0,0,s.frameW,0],[0,s.frameD,s.frameW,s.frameD]].forEach(([x1,y1,x2,y2]) => {
-    ctx.beginPath(); ctx.moveTo(tx(x1),ty(y1)); ctx.lineTo(tx(x2),ty(y2)); ctx.stroke();
+  [[0, 0, 0, s.frameD], [s.frameW, 0, s.frameW, s.frameD], [0, 0, s.frameW, 0], [0, s.frameD, s.frameW, s.frameD]].forEach(([x1, y1, x2, y2]) => {
+    ctx.beginPath(); ctx.moveTo(tx(x1), ty(y1)); ctx.lineTo(tx(x2), ty(y2)); ctx.stroke();
   });
 
   // Pieces
-  const is3Piece = layout.threePieceSolution;
-  const framePos = {
-    '1A': { x: 0, y: 0 },
-    '2A': { x: s.row1Joint, y: 0 },
-    '2C': { x: 0, y: s.row1Width },
-    '2D': { x: s.row2Joint, y: s.rightSplitDepth },
-    'R':  { x: s.row1Joint, y: 0 },
-  };
+  for (const p of layout.pieces) {
+    // Convert grid coords to frame coords
+    let frameX, frameY, frameW_p, frameH_p;
+    if (isVertical) {
+      // Grid frameLen runs along real frameD, frameSpan runs along real frameW
+      frameX = p.fy; frameY = p.fx;
+      frameW_p = p.h; frameH_p = p.w;
+    } else {
+      frameX = p.fx; frameY = p.fy;
+      frameW_p = p.w; frameH_p = p.h;
+    }
 
-  const drawPieces = is3Piece ? is3Piece.pieces : layout.pieces;
-  for (const p of drawPieces) {
-    const fp = framePos[p.name];
-    if (!fp) continue;
     ctx.globalAlpha = 0.35;
     ctx.fillStyle = p.color;
-    ctx.fillRect(tx(fp.x), ty(fp.y), p.w * sc, p.h * sc);
+    ctx.fillRect(tx(frameX), ty(frameY), frameW_p * sc, frameH_p * sc);
     ctx.globalAlpha = 1;
     ctx.strokeStyle = p.color;
     ctx.lineWidth = 2;
     ctx.setLineDash([]);
-    ctx.strokeRect(tx(fp.x), ty(fp.y), p.w * sc, p.h * sc);
+    ctx.strokeRect(tx(frameX), ty(frameY), frameW_p * sc, frameH_p * sc);
 
     ctx.fillStyle = '#fff';
     ctx.font = '12px Segoe UI, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const labelX = tx(fp.x + p.w/2);
-    const labelY = ty(fp.y + p.h/2);
-    ctx.fillText(p.name, labelX, labelY - (p.name === 'R' ? 7 : 0));
-    ctx.fillText(`${p.w.toFixed(1)}x${p.h.toFixed(1)}`, labelX, labelY + (p.name === 'R' ? 7 : 14));
-    if (p.name === 'R') {
-      ctx.font = '10px Segoe UI, sans-serif';
-      ctx.fillStyle = '#e879f9';
-      ctx.fillText('⟲ rotated on plate', labelX, labelY + 21);
+    ctx.fillText(p.name, tx(frameX + frameW_p / 2), ty(frameY + frameH_p / 2) - 7);
+    ctx.font = '10px Segoe UI, sans-serif';
+    ctx.fillStyle = '#ccc';
+    ctx.fillText(`${frameW_p.toFixed(1)}×${frameH_p.toFixed(1)}`, tx(frameX + frameW_p / 2), ty(frameY + frameH_p / 2) + 7);
+  }
+
+  // Cut lines
+  ctx.setLineDash([6, 4]);
+  ctx.lineWidth = 2;
+
+  // Vertical cuts (between columns)
+  for (const cut of grid.vCuts) {
+    ctx.strokeStyle = cut.onJoist ? COLORS.cutOnJoist : COLORS.cutOffJoist;
+    if (isVertical) {
+      // In vertical mode, vCuts are along frameD (real Y axis)
+      ctx.beginPath(); ctx.moveTo(tx(0), ty(cut.pos)); ctx.lineTo(tx(s.frameW), ty(cut.pos)); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(tx(cut.pos), ty(0)); ctx.lineTo(tx(cut.pos), ty(s.frameD)); ctx.stroke();
     }
   }
 
-  // Joint lines (dashed yellow — showing cut positions on joists)
-  ctx.setLineDash([6, 4]);
-  ctx.lineWidth = 2;
-  if (is3Piece) {
-    // 3-piece mode: single joint line spanning full depth
-    ctx.strokeStyle = layout.row1OnJoist ? COLORS.jointLine : COLORS.invalid;
-    ctx.beginPath(); ctx.moveTo(tx(s.row1Joint), ty(0)); ctx.lineTo(tx(s.row1Joint), ty(s.frameD)); ctx.stroke();
-  } else {
-    // Row 1 joint: vertical line at x=row1Joint, spanning back pieces
-    ctx.strokeStyle = layout.row1OnJoist ? COLORS.jointLine : COLORS.invalid;
-    const row1JointBottom = Math.max(s.row1Width, s.rightSplitDepth);
-    ctx.beginPath(); ctx.moveTo(tx(s.row1Joint), ty(0)); ctx.lineTo(tx(s.row1Joint), ty(row1JointBottom)); ctx.stroke();
-    // Row 2 joint: vertical line at x=row2Joint, spanning front pieces
-    ctx.strokeStyle = layout.row2OnJoist ? COLORS.jointLine : COLORS.invalid;
-    const row2JointTop = Math.min(s.row1Width, s.rightSplitDepth);
-    ctx.beginPath(); ctx.moveTo(tx(s.row2Joint), ty(row2JointTop)); ctx.lineTo(tx(s.row2Joint), ty(s.frameD)); ctx.stroke();
+  // Horizontal cuts (between rows) — skip merged columns
+  ctx.strokeStyle = '#6366f1';
+  for (const cut of grid.hCuts) {
+    if (grid.mergedCols && grid.mergedCols.size > 0) {
+      // Draw partial lines only across unmerged columns
+      for (const p of grid.pieces) {
+        if (p.row === -1) continue; // merged piece, skip
+        if (p.row !== 0) continue; // only need first row to get column extents
+        const c = p.col;
+        if (grid.mergedCols.has(c)) continue; // skip merged columns
+        // Draw hCut segment across this column
+        if (isVertical) {
+          ctx.beginPath(); ctx.moveTo(tx(cut.pos), ty(p.fx)); ctx.lineTo(tx(cut.pos), ty(p.fx + p.w)); ctx.stroke();
+        } else {
+          ctx.beginPath(); ctx.moveTo(tx(p.fx), ty(cut.pos)); ctx.lineTo(tx(p.fx + p.w), ty(cut.pos)); ctx.stroke();
+        }
+      }
+    } else {
+      // No merged columns — full-width line
+      if (isVertical) {
+        ctx.beginPath(); ctx.moveTo(tx(cut.pos), ty(0)); ctx.lineTo(tx(cut.pos), ty(s.frameD)); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.moveTo(tx(0), ty(cut.pos)); ctx.lineTo(tx(s.frameW), ty(cut.pos)); ctx.stroke();
+      }
+    }
   }
   ctx.setLineDash([]);
-
-  // T&G interlock line(s) between back and front pieces
-  const isStepped = layout.isStepped;
-  ctx.setLineDash([3, 3]);
-  ctx.strokeStyle = '#8b5cf6';
-  ctx.lineWidth = 2;
-  if (is3Piece) {
-    // 3-piece: interlock only on left side (between 1A and 2C)
-    ctx.beginPath();
-    ctx.moveTo(tx(0), ty(s.row1Width));
-    ctx.lineTo(tx(s.row1Joint), ty(s.row1Width));
-    ctx.stroke();
-  } else if (!isStepped) {
-    // Single horizontal line (same as before)
-    ctx.beginPath(); ctx.moveTo(tx(0), ty(s.row1Width)); ctx.lineTo(tx(s.frameW), ty(s.row1Width)); ctx.stroke();
-  } else {
-    // Stepped interlock: left at row1Width, step at row1Joint, right at rightSplitDepth
-    ctx.beginPath();
-    ctx.moveTo(tx(0), ty(s.row1Width));
-    ctx.lineTo(tx(s.row1Joint), ty(s.row1Width));
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(tx(s.row1Joint), ty(s.row1Width));
-    ctx.lineTo(tx(s.row1Joint), ty(s.rightSplitDepth));
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(tx(s.row1Joint), ty(s.rightSplitDepth));
-    ctx.lineTo(tx(s.frameW), ty(s.rightSplitDepth));
-    ctx.stroke();
-  }
-  ctx.setLineDash([]);
-
-  // T&G labels on interlock line(s)
-  ctx.font = '9px Segoe UI, sans-serif';
-  ctx.textAlign = 'left';
-  if (is3Piece) {
-    // Only left-side interlock labels
-    ctx.fillStyle = COLORS.male;
-    ctx.fillText('▲ M (tongue)', tx(s.lumberW + 4), ty(s.row1Width) - 5);
-    ctx.fillStyle = COLORS.female;
-    ctx.fillText('▼ F (groove)', tx(s.lumberW + 4), ty(s.row1Width) + 11);
-    // Note: no T&G on R piece
-    ctx.fillStyle = '#888';
-    ctx.font = '8px Segoe UI, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('no T&G interlock', tx(s.row1Joint + (s.frameW - s.row1Joint) / 2), ty(s.frameD / 2) + 35);
-  } else if (!isStepped) {
-    ctx.fillStyle = COLORS.male;
-    ctx.fillText('▲ Row 1 male (tongue)', tx(s.lumberW + 4), ty(s.row1Width) - 5);
-    ctx.fillStyle = COLORS.female;
-    ctx.fillText('▼ Row 2 female (groove)', tx(s.lumberW + 4), ty(s.row1Width) + 11);
-  } else {
-    // Left interlock labels
-    ctx.fillStyle = COLORS.male;
-    ctx.fillText('▲ M', tx(s.lumberW + 4), ty(s.row1Width) - 5);
-    ctx.fillStyle = COLORS.female;
-    ctx.fillText('▼ F', tx(s.lumberW + 4), ty(s.row1Width) + 11);
-    // Right interlock labels
-    ctx.fillStyle = COLORS.male;
-    ctx.fillText('▲ M', tx(s.row1Joint + 4), ty(s.rightSplitDepth) - 5);
-    ctx.fillStyle = COLORS.female;
-    ctx.fillText('▼ F', tx(s.row1Joint + 4), ty(s.rightSplitDepth) + 11);
-  }
-
-  // (Back wall T&G info is included in the "Back wall" label below)
 
   // Joist labels
   ctx.font = '10px Segoe UI, sans-serif';
@@ -1197,6 +1188,7 @@ function drawFrame(canvas, s, layout) {
   // Dimension labels
   ctx.fillStyle = '#e74c3c';
   ctx.font = '11px Segoe UI, sans-serif';
+  ctx.textAlign = 'center';
   ctx.fillText(`${s.frameW} cm`, tx(s.frameW / 2), ty(-0.14 * s.frameD));
   ctx.save();
   ctx.translate(tx(-0.08 * s.frameW), ty(s.frameD / 2));
@@ -1205,11 +1197,12 @@ function drawFrame(canvas, s, layout) {
   ctx.fillText(`${s.frameD} cm`, 0, 0);
   ctx.restore();
 
+  // Orientation label
   ctx.fillStyle = '#666';
   ctx.font = '10px Segoe UI, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('Back wall — F (groove)', tx(s.frameW / 2), ty(-0.22 * s.frameD));
-  ctx.fillText('Front', tx(s.frameW / 2), ty(s.frameD + 0.08 * s.frameD));
+  const orientLabel = isVertical ? 'Plates run front→back' : 'Plates run left→right';
+  ctx.fillText(orientLabel, tx(s.frameW / 2), ty(s.frameD + 0.06 * s.frameD));
 
   if (layout.valid) {
     ctx.strokeStyle = COLORS.validBorder;
@@ -1219,8 +1212,8 @@ function drawFrame(canvas, s, layout) {
   }
 }
 
-// ===== DRAWING: PLATE (generic, with T&G edges) =====
-function drawPlate(canvas, plateLayout, s) {
+// ===== DRAWING: PLATE =====
+function drawPlate(canvas, plateLayout, plateL, plateW) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
@@ -1239,616 +1232,200 @@ function drawPlate(canvas, plateLayout, s) {
     return;
   }
 
-  const pad = 40;
-  const sc = Math.min((W - pad * 2) / s.osbL, (H - pad * 2) / s.osbW);
-  const offX = (W - s.osbL * sc) / 2;
-  const offY = (H - s.osbW * sc) / 2;
+  const pad = 30;
+  const sc = Math.min((W - pad * 2) / plateL, (H - pad * 2) / plateW);
+  const offX = (W - plateL * sc) / 2;
+  const offY = (H - plateW * sc) / 2;
   const tx = x => offX + x * sc;
   const ty = y => offY + y * sc;
 
   // Plate outline
   ctx.strokeStyle = '#555';
   ctx.lineWidth = 2;
-  ctx.strokeRect(tx(0), ty(0), s.osbL * sc, s.osbW * sc);
-
-  // T&G edge indicators — colored bars
-  // Top = male (tongue) — pink
-  ctx.fillStyle = COLORS.male;
-  ctx.fillRect(tx(0), ty(0) - 4, s.osbL * sc, 3);
-  ctx.font = '9px Segoe UI, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('MALE (tongue)', tx(s.osbL / 2), ty(0) - 10);
-
-  // Bottom = female (groove) — purple
-  ctx.fillStyle = COLORS.female;
-  ctx.fillRect(tx(0), ty(s.osbW) + 1, s.osbL * sc, 3);
-  ctx.fillText('FEMALE (groove)', tx(s.osbL / 2), ty(s.osbW) + 16);
+  ctx.strokeRect(tx(0), ty(0), plateL * sc, plateW * sc);
 
   // Pieces
   for (const item of plateLayout) {
     const p = item.piece;
+    const pw = item.pw || p.w;  // placed width (may be rotated)
+    const ph = item.ph || p.h;  // placed height
     ctx.globalAlpha = 0.4;
     ctx.fillStyle = p.color;
-    ctx.fillRect(tx(item.x), ty(item.y), p.w * sc, p.h * sc);
+    ctx.fillRect(tx(item.x), ty(item.y), pw * sc, ph * sc);
     ctx.globalAlpha = 1;
     ctx.strokeStyle = p.color;
     ctx.lineWidth = 2;
     ctx.setLineDash([]);
-    ctx.strokeRect(tx(item.x), ty(item.y), p.w * sc, p.h * sc);
+    ctx.strokeRect(tx(item.x), ty(item.y), pw * sc, ph * sc);
 
-    // T&G edge highlight on the piece
-    const hasTG = checkTG(item, s.osbW);
-    if (p.needsEdge === 'male' || p.needsEdge === 'both') {
-      // Check if touching top
-      if (item.y < EPS) {
-        ctx.fillStyle = COLORS.male;
-        ctx.fillRect(tx(item.x), ty(item.y), p.w * sc, 2);
-      }
-    }
-    if (p.needsEdge === 'female' || p.needsEdge === 'both') {
-      // Check if touching bottom
-      if (Math.abs(item.y + p.h - s.osbW) < EPS) {
-        ctx.fillStyle = COLORS.female;
-        ctx.fillRect(tx(item.x), ty(item.y + p.h) - 2, p.w * sc, 2);
-      }
-    }
-
-    // Label
     ctx.fillStyle = '#fff';
-    ctx.font = '12px Segoe UI, sans-serif';
+    ctx.font = '11px Segoe UI, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const cx = tx(item.x + p.w / 2);
-    const cy = ty(item.y + p.h / 2);
-    if (p.rotated) {
-      // Rotated piece: show name + rotation symbol, original dims
-      ctx.fillText(`${p.name} ⟲`, cx, cy - 14);
-      ctx.font = '10px Segoe UI, sans-serif';
-      ctx.fillText(`${p.origW.toFixed(1)}×${p.origH.toFixed(1)}`, cx, cy);
-      ctx.font = '9px Segoe UI, sans-serif';
-      ctx.fillStyle = '#e879f9';
-      ctx.fillText(`on plate: ${p.w.toFixed(1)}×${p.h.toFixed(1)}`, cx, cy + 13);
-    } else {
-      ctx.fillText(p.name, cx, cy - 7);
-      ctx.font = '10px Segoe UI, sans-serif';
-      ctx.fillText(`${p.w.toFixed(1)}x${p.h.toFixed(1)}`, cx, cy + 6);
-    }
-
-    // T&G status indicator
-    if (p.needsEdge !== 'none') {
-      const tgOk = checkTG(item, s.osbW);
-      ctx.font = '9px Segoe UI, sans-serif';
-      ctx.fillStyle = tgOk ? '#4ade80' : '#f87171';
-      const edgeLabel = p.needsEdge === 'both' ? 'M+F' : p.needsEdge === 'male' ? 'M' : 'F';
-      ctx.fillText(tgOk ? `${edgeLabel} ✓` : `${edgeLabel} ✗`, cx, cy + 19);
-    } else if (p.rotated) {
-      ctx.font = '9px Segoe UI, sans-serif';
-      ctx.fillStyle = '#888';
-      ctx.fillText('no T&G', cx, cy + 26);
-    }
+    const cx = tx(item.x + pw / 2);
+    const cy = ty(item.y + ph / 2);
+    ctx.fillText(p.name, cx, cy - 6);
+    ctx.font = '9px Segoe UI, sans-serif';
+    ctx.fillStyle = '#aaa';
+    ctx.fillText(`${pw.toFixed(1)}×${ph.toFixed(1)}`, cx, cy + 7);
   }
 
   // Cut lines
   ctx.setLineDash([6, 3]);
   ctx.lineWidth = 1.5;
-
-  const xCuts = new Set();
-  const yCuts = new Set();
+  const xCuts = new Set(), yCuts = new Set();
   for (const item of plateLayout) {
+    const pw = item.pw || item.piece.w;
+    const ph = item.ph || item.piece.h;
     if (item.x > EPS) xCuts.add(item.x);
-    if (item.x + item.piece.w < s.osbL - EPS) xCuts.add(item.x + item.piece.w);
+    if (item.x + pw < plateL - EPS) xCuts.add(item.x + pw);
     if (item.y > EPS) yCuts.add(item.y);
-    if (item.y + item.piece.h < s.osbW - EPS) yCuts.add(item.y + item.piece.h);
+    if (item.y + ph < plateW - EPS) yCuts.add(item.y + ph);
   }
-
   ctx.strokeStyle = '#ef4444';
   for (const cx of xCuts) {
-    ctx.beginPath(); ctx.moveTo(tx(cx), ty(0)); ctx.lineTo(tx(cx), ty(s.osbW)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tx(cx), ty(0)); ctx.lineTo(tx(cx), ty(plateW)); ctx.stroke();
   }
   ctx.strokeStyle = '#f59e0b';
   for (const cy of yCuts) {
-    ctx.beginPath(); ctx.moveTo(tx(0), ty(cy)); ctx.lineTo(tx(s.osbL), ty(cy)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tx(0), ty(cy)); ctx.lineTo(tx(plateL), ty(cy)); ctx.stroke();
   }
   ctx.setLineDash([]);
-
-  // Waste shading
-  ctx.globalAlpha = 0.06;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(tx(0), ty(0), s.osbL * sc, s.osbW * sc);
-  ctx.globalAlpha = 1;
 
   // Plate size label
   ctx.fillStyle = '#555';
   ctx.font = '10px Segoe UI, sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText(`${s.osbL}x${s.osbW} cm`, tx(s.osbL), ty(s.osbW) + 28);
+  ctx.fillText(`${plateL}×${plateW} cm`, tx(plateL), ty(plateW) + 20);
 }
 
-// ===== FAILURE ANALYSIS =====
-
-/**
- * For a set of pieces assigned to one plate, try to place them greedily
- * and report what fits, what overflows, and why.
- */
-function analyzeOnePlate(pieces, plateL, plateW) {
-  if (pieces.length === 0) return { fits: true, placed: [], overflow: [], reasons: [] };
-
-  // Try packing — if it works, no failure
-  const result = packOnePlate(pieces, plateL, plateW);
-  if (result) {
-    return { fits: true, placed: result, overflow: [], reasons: [] };
+// ===== DYNAMIC PLATE CANVASES =====
+function ensurePlateCanvases(count) {
+  const container = document.getElementById('platesContainer');
+  // Always rebuild — simpler and avoids stale DOM issues
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const section = document.createElement('div');
+    section.className = 'diagram-section plate-section';
+    section.innerHTML = `<h2 id="plateTitle${i}">Plate ${i + 1}</h2><canvas id="plateCanvas${i}" height="180"></canvas>`;
+    container.appendChild(section);
   }
-
-  // It doesn't fit. Build a greedy "best attempt" to visualize WHY.
-  // Sort pieces by area descending (place big pieces first)
-  const sorted = [...pieces].sort((a, b) => (b.w * b.h) - (a.w * a.h));
-  const placed = [];
-  const overflow = [];
-  const reasons = [];
-
-  // Simple greedy: try to place each piece. Track occupied regions as simple shelves.
-  // Shelf packing: place side-by-side along x, then stack along y.
-  let curX = 0, curY = 0, rowH = 0;
-
-  for (const p of sorted) {
-    // Can it fit at current position?
-    if (curX + p.w <= plateL + EPS && curY + p.h <= plateW + EPS) {
-      placed.push({ piece: p, x: curX, y: curY });
-      rowH = Math.max(rowH, p.h);
-      curX += p.w;
-    }
-    // Try next row
-    else if (p.w <= plateL + EPS && curY + rowH + p.h <= plateW + EPS) {
-      curY += rowH;
-      curX = 0;
-      rowH = 0;
-      placed.push({ piece: p, x: curX, y: curY });
-      rowH = Math.max(rowH, p.h);
-      curX += p.w;
-    }
-    // Doesn't fit — place it at "best attempt" position (where it would go) to show overflow
-    else {
-      let ox = curX, oy = curY;
-      // If it doesn't fit horizontally, try start of next row
-      if (curX + p.w > plateL + EPS && p.w <= plateL + EPS) {
-        ox = 0;
-        oy = curY + rowH;
-      }
-      overflow.push({ piece: p, x: ox, y: oy });
-
-      // Generate human-readable reason
-      const availW = plateL - ox;
-      const availH = plateW - oy;
-      const shortW = p.w - availW;
-      const shortH = p.h - availH;
-      let reason = `${p.name} (${p.w.toFixed(1)}×${p.h.toFixed(1)})`;
-      if (shortW > EPS && shortH > EPS) {
-        reason += ` overflows by ${shortW.toFixed(1)} cm wide & ${shortH.toFixed(1)} cm tall`;
-      } else if (shortW > EPS) {
-        reason += `: needs ${p.w.toFixed(1)} cm but only ${availW.toFixed(1)} cm available`;
-      } else if (shortH > EPS) {
-        reason += `: needs ${p.h.toFixed(1)} cm tall but only ${availH.toFixed(1)} cm available`;
-      } else {
-        reason += ` won't fit (no room in layout)`;
-      }
-      reasons.push(reason);
-    }
-  }
-
-  return { fits: false, placed, overflow, reasons };
-}
-
-/**
- * Analyze all 7 unique splits and return failure info for each.
- */
-function analyzeFailures(pieces, osbL, osbW) {
-  const n = pieces.length;
-  const seen = new Set();
-  const failures = [];
-
-  for (let mask = 1; mask < (1 << n) - 1; mask++) {
-    // Deduplicate: mask and its complement are the same split
-    const comp = ((1 << n) - 1) ^ mask;
-    const key = Math.min(mask, comp);
-    if (seen.has(key)) continue;
-    seen.add(key);
-
-    const p1 = [], p2 = [];
-    for (let i = 0; i < n; i++) {
-      if (mask & (1 << i)) p1.push(pieces[i]);
-      else p2.push(pieces[i]);
-    }
-
-    const a1 = analyzeOnePlate(p1, osbL, osbW);
-    const a2 = analyzeOnePlate(p2, osbL, osbW);
-
-    // Collect all reasons
-    const allReasons = [];
-    if (!a1.fits) allReasons.push(...a1.reasons.map(r => `Plate A: ${r}`));
-    if (!a2.fits) allReasons.push(...a2.reasons.map(r => `Plate B: ${r}`));
-
-    failures.push({
-      plateA: { pieces: p1, analysis: a1 },
-      plateB: { pieces: p2, analysis: a2 },
-      reasons: allReasons,
-      bothFail: !a1.fits && !a2.fits,
-    });
-  }
-
-  return failures;
-}
-
-// ===== DRAWING: FAILURE MINI-PLATE =====
-function drawFailureMiniPlate(canvas, analysis, osbL, osbW) {
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  ctx.scale(dpr, dpr);
-  const W = rect.width, H = rect.height;
-  ctx.clearRect(0, 0, W, H);
-
-  const allItems = [...analysis.placed, ...analysis.overflow];
-  if (allItems.length === 0) {
-    ctx.fillStyle = '#333';
-    ctx.font = '11px Segoe UI, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('(empty)', W / 2, H / 2);
-    return;
-  }
-
-  const pad = 16;
-  // Calculate scale to show both the plate AND any overflowing pieces
-  let maxX = osbL, maxY = osbW;
-  for (const item of [...analysis.placed, ...analysis.overflow]) {
-    maxX = Math.max(maxX, item.x + item.piece.w);
-    maxY = Math.max(maxY, item.y + item.piece.h);
-  }
-  const sc = Math.min((W - pad * 2) / maxX, (H - pad * 2) / maxY);
-  const offX = (W - maxX * sc) / 2;
-  const offY = (H - maxY * sc) / 2;
-  const tx = x => offX + x * sc;
-  const ty = y => offY + y * sc;
-
-  // Plate outline
-  ctx.strokeStyle = '#4a5568';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([]);
-  ctx.strokeRect(tx(0), ty(0), osbL * sc, osbW * sc);
-
-  // Plate fill (subtle)
-  ctx.fillStyle = 'rgba(15, 15, 35, 0.6)';
-  ctx.fillRect(tx(0), ty(0), osbL * sc, osbW * sc);
-
-  // Draw placed pieces (these fit)
-  for (const item of analysis.placed) {
-    const p = item.piece;
-    ctx.globalAlpha = 0.5;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(tx(item.x), ty(item.y), p.w * sc, p.h * sc);
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = p.color;
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([]);
-    ctx.strokeRect(tx(item.x), ty(item.y), p.w * sc, p.h * sc);
-
-    // Label
-    ctx.fillStyle = '#fff';
-    ctx.font = '10px Segoe UI, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const cx = tx(item.x + p.w / 2);
-    const cy = ty(item.y + p.h / 2);
-    ctx.fillText(p.name, cx, cy - 5);
-    ctx.font = '8px Segoe UI, sans-serif';
-    ctx.fillStyle = '#aaa';
-    ctx.fillText(`${p.w.toFixed(1)}×${p.h.toFixed(1)}`, cx, cy + 6);
-  }
-
-  // Draw overflow pieces (these DON'T fit) — red, with dashed border
-  for (const item of analysis.overflow) {
-    const p = item.piece;
-
-    // Red transparent fill
-    ctx.globalAlpha = 0.25;
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(tx(item.x), ty(item.y), p.w * sc, p.h * sc);
-    ctx.globalAlpha = 1;
-
-    // Dashed red border
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 3]);
-    ctx.strokeRect(tx(item.x), ty(item.y), p.w * sc, p.h * sc);
-    ctx.setLineDash([]);
-
-    // Red X across the overflowing piece
-    const x1 = tx(item.x), y1 = ty(item.y);
-    const x2 = tx(item.x + p.w), y2 = ty(item.y + p.h);
-    ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x2, y1); ctx.lineTo(x1, y2); ctx.stroke();
-
-    // Overflow zone hatching (the part extending past the plate)
-    const clipX1 = Math.max(tx(item.x), tx(osbL));
-    const clipY1 = Math.max(ty(item.y), ty(osbW));
-    const clipX2 = tx(item.x + p.w);
-    const clipY2 = ty(item.y + p.h);
-
-    // Draw hatching lines in the overflow region
-    if (clipX1 < clipX2 || clipY1 < clipY2) {
-      ctx.save();
-      ctx.beginPath();
-      // Right overflow region
-      if (item.x + p.w > osbL + EPS) {
-        ctx.rect(tx(osbL), ty(item.y), (item.x + p.w - osbL) * sc, p.h * sc);
-      }
-      // Bottom overflow region
-      if (item.y + p.h > osbW + EPS) {
-        ctx.rect(tx(item.x), ty(osbW), p.w * sc, (item.y + p.h - osbW) * sc);
-      }
-      ctx.clip();
-
-      ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
-      ctx.lineWidth = 1;
-      const step = 6;
-      for (let d = -200; d < 400; d += step) {
-        ctx.beginPath();
-        ctx.moveTo(tx(item.x) + d, ty(item.y));
-        ctx.lineTo(tx(item.x) + d + 200, ty(item.y) + 200);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    // Label
-    ctx.fillStyle = '#f87171';
-    ctx.font = 'bold 10px Segoe UI, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const cx = tx(item.x + p.w / 2);
-    const cy = ty(item.y + p.h / 2);
-    ctx.fillText(p.name, cx, cy - 5);
-    ctx.font = '8px Segoe UI, sans-serif';
-    ctx.fillText(`${p.w.toFixed(1)}×${p.h.toFixed(1)}`, cx, cy + 6);
-  }
-
-  // Plate dimension label
-  ctx.fillStyle = '#444';
-  ctx.font = '8px Segoe UI, sans-serif';
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'top';
-  ctx.fillText(`${osbL}×${osbW}`, tx(osbL), ty(osbW) + 3);
-
-  // Green checkmark or red X for plate status
-  ctx.font = 'bold 14px Segoe UI, sans-serif';
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'top';
-  if (analysis.fits) {
-    ctx.fillStyle = '#4ade80';
-    ctx.fillText('OK', tx(osbL) - 2, ty(0) + 3);
-  } else {
-    ctx.fillStyle = '#ef4444';
-    ctx.fillText('FAIL', tx(osbL) - 2, ty(0) + 3);
-  }
-}
-
-/**
- * Build and render the full failure diagnosis UI.
- */
-function renderFailureDiagnosis(failures, s) {
-  const grid = document.getElementById('failureGrid');
-  const areaNote = document.getElementById('failureAreaNote');
-
-  // Calculate area info
-  const piecesArea = failures[0].plateA.pieces.concat(failures[0].plateB.pieces)
-    .reduce((sum, p) => sum + p.w * p.h, 0);
-  const totalArea = 2 * s.osbL * s.osbW;
-  areaNote.textContent = `Total piece area: ${(piecesArea / 10000).toFixed(2)} m\u00b2 of ${(totalArea / 10000).toFixed(2)} m\u00b2 plate area (${(piecesArea / totalArea * 100).toFixed(0)}%) \u2014 area fits, but shapes don't`;
-
-  // Build cards
-  grid.innerHTML = '';
-  failures.forEach((f, idx) => {
-    const card = document.createElement('div');
-    card.className = 'failure-card';
-
-    const aNamesHtml = f.plateA.pieces.map(p =>
-      `<strong style="color:${p.color}">${p.name}</strong>`).join(', ');
-    const bNamesHtml = f.plateB.pieces.map(p =>
-      `<strong style="color:${p.color}">${p.name}</strong>`).join(', ');
-
-    const aStatus = f.plateA.analysis.fits
-      ? '<span style="color:#4ade80">OK</span>'
-      : '<span style="color:#ef4444">FAIL</span>';
-    const bStatus = f.plateB.analysis.fits
-      ? '<span style="color:#4ade80">OK</span>'
-      : '<span style="color:#ef4444">FAIL</span>';
-
-    card.innerHTML = `
-      <div class="failure-card-header">
-        <span class="split-label">A: ${aNamesHtml} &nbsp;|&nbsp; B: ${bNamesHtml}</span>
-        <span class="split-num">Split ${idx + 1}/7</span>
-      </div>
-      <div class="failure-plates">
-        <div class="failure-plate-box">
-          <div class="plate-label">Plate A ${aStatus}</div>
-          <canvas class="fail-canvas-a" height="100"></canvas>
-        </div>
-        <div class="failure-plate-box">
-          <div class="plate-label">Plate B ${bStatus}</div>
-          <canvas class="fail-canvas-b" height="100"></canvas>
-        </div>
-      </div>
-      <div class="failure-reason">${f.reasons.map(r => `\u2022 ${r}`).join('<br>')}</div>
-    `;
-
-    grid.appendChild(card);
-
-    // Draw after DOM insertion so getBoundingClientRect works
-    requestAnimationFrame(() => {
-      const canvasA = card.querySelector('.fail-canvas-a');
-      const canvasB = card.querySelector('.fail-canvas-b');
-      drawFailureMiniPlate(canvasA, f.plateA.analysis, s.osbL, s.osbW);
-      drawFailureMiniPlate(canvasB, f.plateB.analysis, s.osbL, s.osbW);
-    });
-  });
 }
 
 // ===== UI =====
-function updatePiecesTable(s, layout, solution) {
+function updatePiecesTable(layout) {
   const body = document.getElementById('piecesBody');
-  // Use 3-piece set when applicable
-  const displayPieces = (solution && solution.mode === '3-piece') ? solution.pieces : layout.pieces;
+  if (!layout.grid) { body.innerHTML = ''; return; }
 
-  body.innerHTML = displayPieces.map(p => {
-    let plateNum = '—', ok = false, tgStatus = '';
-    if (solution) {
-      let item = null;
-      if (solution.plate1Layout.some(it => { if (it.piece.name === p.name) { item = it; return true; } })) plateNum = 'Plate 1';
-      else if (solution.plate2Layout.some(it => { if (it.piece.name === p.name) { item = it; return true; } })) {
-        plateNum = (item && item.piece.rotated) ? 'Plate 2 (⟲)' : 'Plate 2';
-      }
-      ok = !!item;
-      if (item) {
-        const tgOk = checkTG(item, s.osbW);
-        if (p.needsEdge === 'both') {
-          tgStatus = '<span class="tg-badge good">M+F ✓</span>';
-        } else if (p.needsEdge === 'male') {
-          tgStatus = tgOk ? '<span class="tg-badge good">M ✓</span>' : '<span class="tg-badge bad">M ✗</span>';
-        } else if (p.needsEdge === 'female') {
-          tgStatus = tgOk ? '<span class="tg-badge good">F ✓</span>' : '<span class="tg-badge bad">F ✗</span>';
-        } else {
-          tgStatus = '<span class="tg-badge na">—</span>';
+  const pieces = layout.pieces;
+  const assignment = layout.assignment;
+
+  body.innerHTML = pieces.map(p => {
+    let plateNum = '—', ok = false;
+    if (assignment) {
+      for (let pi = 0; pi < assignment.plates.length; pi++) {
+        if (assignment.plates[pi].pieces.some(pp => pp.name === p.name)) {
+          plateNum = `Plate ${pi + 1}`;
+          ok = true;
+          break;
         }
       }
     }
+    const isVertical = layout.grid.orientation.startsWith('vertical');
+    const frameX = isVertical ? p.fy : p.fx;
+    const frameY = isVertical ? p.fx : p.fy;
+    const posLabel = `(${frameX.toFixed(0)}, ${frameY.toFixed(0)})`;
+    const dims = isVertical ? `${p.h.toFixed(1)} × ${p.w.toFixed(1)}` : `${p.w.toFixed(1)} × ${p.h.toFixed(1)}`;
+
     return `<tr class="${ok ? 'valid-row' : 'invalid-row'}">
       <td><strong style="color:${p.color}">${p.name}</strong></td>
-      <td>${p.w.toFixed(1)} x ${p.h.toFixed(1)} cm</td>
+      <td>${dims} cm</td>
       <td>${plateNum}</td>
-      <td>${p.use}</td>
-      <td>${tgStatus}</td>
+      <td>${posLabel}</td>
       <td>${ok ? '&#10003;' : '&#10007;'}</td>
     </tr>`;
   }).join('');
 
-  const modeNote = (solution && solution.mode === '3-piece')
-    ? ' &nbsp;|&nbsp; <span style="color:#e879f9;">3-piece mode (2A+2D → R)</span>'
+  document.getElementById('wasteInfo').innerHTML = layout.valid
+    ? `Waste: <span>${layout.wasteArea.toFixed(0)} cm<sup>2</sup> (${layout.wastePct.toFixed(1)}%)</span> &nbsp;|&nbsp; ${layout.assignment.totalPlatesUsed} plate${layout.assignment.totalPlatesUsed > 1 ? 's' : ''} used`
     : '';
-  document.getElementById('wasteInfo').innerHTML =
-    `Waste: <span>${layout.wasteArea.toFixed(0)} cm<sup>2</sup> (${layout.wastePct.toFixed(1)}%)</span>` +
-    (solution ? ` &nbsp;|&nbsp; T&G interlocks: <span>${solution.tgScore}/${solution.tgMax}</span>` : '') +
-    modeNote +
-    (layout.staggerWarn ? `<br><span style="color:#f59e0b;">${layout.staggerWarn}</span>` : '');
 }
 
-function updateValidation(layout, s) {
+function updateValidation(layout) {
   const banner = document.getElementById('validationBanner');
   const text = document.getElementById('validationText');
   const list = document.getElementById('issuesList');
 
   if (layout.valid) {
-    const sol = layout.solutions[currentSolIdx];
-    const threePiece = layout.threePieceSolution;
-    const activeSol = sol || threePiece;
-
+    const grid = layout.grid;
     banner.className = 'validation-banner valid';
+    text.innerHTML = `&#10003; Valid — ${grid.totalPlates} pieces on ${layout.assignment.totalPlatesUsed} plate${layout.assignment.totalPlatesUsed > 1 ? 's' : ''}`;
 
-    if (threePiece && !sol) {
-      // 3-piece mode
-      const tgInfo = ` | T&G: ${threePiece.tgScore}/${threePiece.tgMax}`;
-      text.innerHTML = `&#10003; Valid — 3-piece mode (right strip merged)${tgInfo}`;
-
-      // Show info about R piece
-      const notes = [];
-      notes.push('R piece (2A+2D merged) is rotated 90° on plate 2 — no T&G interlock on R');
-
-      // Collect T&G warnings
-      const allItems = [...threePiece.plate1Layout, ...threePiece.plate2Layout];
-      for (const item of allItems) {
-        const p = item.piece;
-        if (p.needsEdge !== 'both' && p.needsEdge !== 'none' && !checkTG(item, s.osbW)) {
-          const edgeName = p.needsEdge === 'male' ? 'male (tongue)' : 'female (groove)';
-          notes.push(`${p.name} needs ${edgeName} edge for interlock but it was cut off`);
-        }
-      }
-
+    if (layout.warnings.length > 0) {
       list.style.display = 'block';
-      list.innerHTML = notes.map(n => `<li style="color:#e879f9;">&#9432; ${n}</li>`).join('');
+      list.innerHTML = layout.warnings.map(w => `<li class="warning">&#9888; ${w}</li>`).join('');
     } else {
-      // Normal 4-piece mode
-      const tgInfo = sol ? ` | T&G: ${sol.tgScore}/${sol.tgMax}` : '';
-      text.innerHTML = `&#10003; Valid — ${layout.solutions.length} assignment${layout.solutions.length > 1 ? 's' : ''}${tgInfo}`;
-
-      // Collect T&G warnings for current solution
-      const warnings = [];
-      if (sol) {
-        const allItems = [...sol.plate1Layout, ...sol.plate2Layout];
-        for (const item of allItems) {
-          const p = item.piece;
-          if (p.needsEdge !== 'both' && p.needsEdge !== 'none' && !checkTG(item, s.osbW)) {
-            const edgeName = p.needsEdge === 'male' ? 'male (tongue)' : 'female (groove)';
-            warnings.push(`${p.name} needs ${edgeName} edge for interlock but it was cut off`);
-          }
-        }
-      }
-      if (warnings.length > 0) {
-        list.style.display = 'block';
-        list.innerHTML = warnings.map(w => `<li style="color:#f59e0b;">&#9888; ${w}</li>`).join('');
-      } else {
-        list.style.display = 'none';
-      }
+      list.style.display = 'none';
     }
   } else {
     banner.className = 'validation-banner invalid';
     text.innerHTML = `&#10007; ${layout.issues.length} issue${layout.issues.length > 1 ? 's' : ''}`;
     list.style.display = 'block';
-    list.innerHTML = layout.issues.map(i => `<li>${i}</li>`).join('');
+    const allItems = [
+      ...layout.issues.map(i => `<li>${i}</li>`),
+      ...layout.warnings.map(w => `<li class="warning">&#9888; ${w}</li>`),
+    ];
+    list.innerHTML = allItems.join('');
   }
 }
 
-function updateSolutionNav(layout) {
-  const group = document.getElementById('solutionNavGroup');
-  const label = document.getElementById('solLabel');
-  const summary = document.getElementById('solSummary');
-  const prevBtn = document.getElementById('prevSol');
-  const nextBtn = document.getElementById('nextSol');
+function updateSolverInfo(layout) {
+  const group = document.getElementById('solverInfoGroup');
+  const info = document.getElementById('solverInfo');
 
-  // 3-piece mode: show summary without nav buttons
-  if (layout.threePieceSolution && layout.solutions.length === 0) {
-    const tp = layout.threePieceSolution;
-    group.style.display = '';
-    label.textContent = '3-piece';
-    prevBtn.disabled = true;
-    nextBtn.disabled = true;
-    const p1names = tp.plate1Pieces.map(p => p.name).join(', ');
-    const p2names = tp.plate2Pieces.map(p => p.name).join(', ');
-    summary.innerHTML =
-      `Plate 1: <strong>${p1names}</strong><br>` +
-      `Plate 2: <strong>${p2names}</strong> <span style="color:#e879f9">(R rotated 90°)</span><br>` +
-      `<span style="color:${tp.tgScore === tp.tgMax ? '#4ade80' : '#f59e0b'}">` +
-      `T&G interlocks: ${tp.tgScore}/${tp.tgMax}</span>`;
-    return;
+  if (!layout.grid) { group.style.display = 'none'; return; }
+  group.style.display = '';
+
+  const grid = layout.grid;
+  const orientTag = `<span class="orientation-tag">${grid.orientation}</span>`;
+
+  // Grid size description — include merge info if applicable
+  let gridDesc;
+  if (grid.mergedCols && grid.mergedCols.size > 0) {
+    const mergedNames = [...grid.mergedCols].map(c => `C${c + 1}`).join(', ');
+    gridDesc = `${grid.numRows} × ${grid.numCols} grid, ${mergedNames} merged → <strong>${grid.totalPlates} pieces</strong>`;
+  } else {
+    const gridSize = `${grid.numRows} row${grid.numRows > 1 ? 's' : ''} × ${grid.numCols} col${grid.numCols > 1 ? 's' : ''}`;
+    gridDesc = `<strong>${gridSize}</strong> = ${grid.totalPlates} pieces`;
   }
 
-  if (layout.solutions.length === 0) { group.style.display = 'none'; return; }
+  const joistInfo = grid.joistTotal > 0
+    ? `Joist-aligned cuts: <strong>${grid.joistAligned}/${grid.joistTotal}</strong>`
+    : 'No vertical cuts needed';
 
-  group.style.display = '';
-  const sol = layout.solutions[currentSolIdx];
-  label.textContent = `${currentSolIdx + 1} / ${layout.solutions.length}`;
-  prevBtn.disabled = currentSolIdx === 0;
-  nextBtn.disabled = currentSolIdx === layout.solutions.length - 1;
+  // Column widths info
+  const colWidths = [];
+  for (let c = 0; c < grid.numCols; c++) {
+    const piece = grid.pieces.find(p => p.col === c);
+    if (piece) colWidths.push(piece.w.toFixed(1));
+  }
+  const colInfo = grid.numCols > 1 ? `Column widths: ${colWidths.join(' + ')} cm` : '';
 
-  const p1names = sol.plate1Pieces.map(p => p.name).join(', ');
-  const p2names = sol.plate2Pieces.map(p => p.name).join(', ');
-  summary.innerHTML =
-    `Plate 1: <strong>${p1names}</strong><br>` +
-    `Plate 2: <strong>${p2names}</strong><br>` +
-    `<span style="color:${sol.tgScore === sol.tgMax ? '#4ade80' : '#f59e0b'}">` +
-    `T&G interlocks: ${sol.tgScore}/${sol.tgMax}</span>`;
+  // Summarize candidates: group by orientation, show best per orientation
+  const totalCandidates = layout.candidates.length;
+  const successCount = layout.results ? layout.results.filter(r => r.assignment.success).length : '?';
+
+  const cutsInfo = grid.totalCuts === 0 ? 'No cuts needed'
+    : `Frame cuts: <strong>${grid.totalCuts}</strong> (${grid.vCuts.length} vertical, ${grid.hCuts.length} horizontal)`;
+
+  info.innerHTML = `
+    Orientation: ${orientTag}<br>
+    Grid: ${gridDesc}<br>
+    ${colInfo ? colInfo + '<br>' : ''}
+    ${cutsInfo}<br>
+    ${joistInfo}<br>
+    <span style="color:#555;">Tried ${totalCandidates} layouts, ${successCount} valid</span>
+  `;
 }
 
 function update() {
@@ -1856,68 +1433,33 @@ function update() {
   if (Object.values(s).some(v => isNaN(v))) return;
   const layout = computeLayout(s);
 
-  allSolutions = layout.solutions;
-  if (currentSolIdx >= allSolutions.length) currentSolIdx = Math.max(0, allSolutions.length - 1);
-  const solution = allSolutions[currentSolIdx] || null;
-
   drawFrame(document.getElementById('frameCanvas'), s, layout);
 
-  const p1Section = document.getElementById('plate1Section');
-  const p2Section = document.getElementById('plate2Section');
-  const failSection = document.getElementById('failureDiagSection');
-  const p1Title = document.getElementById('plate1Title');
-  const p2Title = document.getElementById('plate2Title');
-
-  const threePiece = layout.threePieceSolution;
-
-  if (solution) {
-    // Valid 4-piece solution — show normal plate views
-    p1Section.style.display = '';
-    p2Section.style.display = '';
-    failSection.style.display = 'none';
-    p1Title.textContent = `Plate 1 — ${solution.plate1Pieces.map(p => p.name).join(' + ')}`;
-    p2Title.textContent = `Plate 2 — ${solution.plate2Pieces.map(p => p.name).join(' + ')}`;
-    drawPlate(document.getElementById('plate1Canvas'), solution.plate1Layout, s);
-    drawPlate(document.getElementById('plate2Canvas'), solution.plate2Layout, s);
-  } else if (threePiece) {
-    // 3-piece solution — show plate views with merged right strip
-    p1Section.style.display = '';
-    p2Section.style.display = '';
-    failSection.style.display = 'none';
-    p1Title.textContent = `Plate 1 — ${threePiece.plate1Pieces.map(p => p.name).join(' + ')}`;
-    p2Title.textContent = `Plate 2 — ${threePiece.plate2Pieces.map(p => p.name).join(' + ')} (R rotated)`;
-    drawPlate(document.getElementById('plate1Canvas'), threePiece.plate1Layout, s);
-    drawPlate(document.getElementById('plate2Canvas'), threePiece.plate2Layout, s);
-  } else if (layout.failedSplits) {
-    // No solution — show failure diagnosis instead of blank plates
-    p1Section.style.display = 'none';
-    p2Section.style.display = 'none';
-    failSection.style.display = '';
-    renderFailureDiagnosis(layout.failedSplits, s);
+  // Dynamic plate canvases
+  if (layout.assignment) {
+    const numPlates = layout.assignment.totalPlatesUsed;
+    ensurePlateCanvases(numPlates);
+    requestAnimationFrame(() => {
+      for (let i = 0; i < numPlates; i++) {
+        const plate = layout.assignment.plates[i];
+        const titleEl = document.getElementById(`plateTitle${i}`);
+        const canvasEl = document.getElementById(`plateCanvas${i}`);
+        if (titleEl) titleEl.textContent = `Plate ${i + 1} — ${plate.pieces.map(p => p.name).join(' + ')}`;
+        if (canvasEl) drawPlate(canvasEl, plate.layout, layout.packPlateL, layout.packPlateW);
+      }
+    });
   } else {
-    // Other issues (e.g. pieces exceed plate) — show blank plates
-    p1Section.style.display = '';
-    p2Section.style.display = '';
-    failSection.style.display = 'none';
-    p1Title.textContent = 'Plate 1';
-    p2Title.textContent = 'Plate 2';
-    drawPlate(document.getElementById('plate1Canvas'), null, s);
-    drawPlate(document.getElementById('plate2Canvas'), null, s);
+    ensurePlateCanvases(0);
   }
 
-  const activeSolution = solution || threePiece || null;
-  updatePiecesTable(s, layout, activeSolution);
-  updateValidation(layout, s);
-  updateSolutionNav(layout);
+  updatePiecesTable(layout);
+  updateValidation(layout);
+  updateSolverInfo(layout);
 }
 
-function changeSolution(delta) {
-  currentSolIdx = Math.max(0, Math.min(allSolutions.length - 1, currentSolIdx + delta));
-  update();
-}
-
-document.querySelectorAll('input').forEach(el => {
-  el.addEventListener('input', () => { currentSolIdx = 0; update(); });
+document.querySelectorAll('input, select').forEach(el => {
+  el.addEventListener('input', update);
+  el.addEventListener('change', update);
 });
 window.addEventListener('resize', update);
 update();
