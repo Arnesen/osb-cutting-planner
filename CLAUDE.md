@@ -61,9 +61,3 @@ All pack functions (`packOne` through `packShelf`) try each piece in both orient
   - `updateSolverInfo()` — shows solver details (orientation, grid, joist alignment)
   - `update()` — main UI update loop, wired to input events
 
-## Reference Images
-- `plate.jpg` — photo of the SterlingOSB TG2 plates
-- `framelayout.png` — frame structure reference
-- `annotated_hems.jpg` — annotated photo of the hems opening
-- `goal.png` — target layout visualization
-- `plate1cuts.png` / `plate2cuts.png` — cut plan references
