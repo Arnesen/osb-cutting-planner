@@ -8,12 +8,6 @@ Single-file web app (`cutting-planner.html`) for planning how to cut OSB plates 
 - Canvas-based diagrams (HiDPI-aware with devicePixelRatio)
 - No build tools, no dependencies — serve with any static HTTP server
 
-## Running
-```bash
-cd "C:\Users\alexa\prosjekt hems"
-python -m http.server 8080
-# Open http://localhost:8080/cutting-planner.html
-```
 
 ## Key Concepts
 
